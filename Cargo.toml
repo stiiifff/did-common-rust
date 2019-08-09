@@ -1,0 +1,10 @@
+[package]
+name = "did-parser"
+version = "0.1.0"
+authors = ["Steve Degosserie <steve@block0.io>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "5"
