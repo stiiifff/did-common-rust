@@ -1,3 +1,6 @@
+// #![no_main]
+#![no_std]
+
 extern crate nom;
 pub mod did_parser;
 
