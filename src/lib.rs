@@ -1,6 +1,8 @@
 // #![no_main]
 #![no_std]
 
+#[macro_use] extern crate lazy_static;
+
 extern crate nom;
 pub mod did_parser;
 

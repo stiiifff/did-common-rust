@@ -1,4 +1,3 @@
-use nom::bytes::complete::take_while;
 use nom::AsChar;
 use nom::InputTakeAtPosition;
 use nom::{
@@ -7,6 +6,7 @@ use nom::{
     sequence::preceded,
     IResult,
 };
+use regex::Regex;
 
 // Implement a parser for Decentralized Identifiers following the syntax defined at:
 // https://w3c-ccg.github.io/did-spec/#generic-did-syntax
@@ -40,21 +40,6 @@ fn did_scheme<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'
     tag(DID_SCHEME)(input)
 }
 
-fn is_id_char(c: char) -> bool {
-    c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_'
-}
-
-fn id_char<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
-where
-    T: InputTakeAtPosition,
-    <T as InputTakeAtPosition>::Item: AsChar,
-{
-    input.split_at_position_complete(|item| {
-        let c = item.as_char();
-        !is_id_char(c)
-    })
-}
-
 fn method_char<T, E: ParseError<T>>(input: T) -> IResult<T, T, E>
 where
     T: InputTakeAtPosition,
@@ -74,29 +59,15 @@ fn method_name<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &
 }
 
 fn method_specific_id<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, &'a str, E> {
-    let (input_id, _) = tag(COLON_SEP)(input)?;
-    // let mut pos: u32 = 0;
-    /// let mut should_be_idchar = true;
-    // for c in input_id.chars() {
-    //     if is_id_char(c) {
-    //         pos += 1;
-    //     } else if COLON_SEP.chars()[0] == c {
-            
-    //     } else {
+    lazy_static! {
+        static ref ID_CHAR_REGEX: Regex = Regex::new("^[[:alnum:]._-]*(:[[:alnum:]._-]*)*").unwrap();
+    }
+    let (input, _) = tag(COLON_SEP)(input)?;
 
-    //     }
-    // }
-    // Ok(input_id[pos..], input_id[0..pos], "")
-    let (input_cur, method_id_part0) = id_char(input_id)?;
-    Ok((input_cur, method_id_part0))
-    
-    // preceded(
-    //     tag(COLON_SEP), //id_char
-
-    // )(input)
-    // // preceded(
-    //     tag(COLON_SEP), recognize(opt(separated_list(tag(COLON_SEP), id_char)))
-    // // )(input)
+    match ID_CHAR_REGEX.find(input) {
+        Some(mat) => Ok((&input[mat.end()..], mat.as_str())),
+        None => Err(nom::Err::Error(E::from_error_kind(input, ErrorKind::RegexpFind)))
+    }
 }
 
 pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
