@@ -3,15 +3,23 @@ name = "did-parser"
 version = "0.1.0"
 authors = ["Steve Degosserie <steve@block0.io>"]
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/stiiifff/did-parser"
+repository = "https://github.com/stiiifff/did-parser"
+documentation = "https://docs.rs/did-parser"
+description = """
+A rust library for parsing Decentralized Identifiers (DIDs) following
+the [DID specification](https://w3c-ccg.github.io/did-spec/) by the W3C.
+"""
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+categories = ["parser-implementations"]
+keywords = ["decentralized-id","did"]
 
 [dependencies]
-lazy_static = "^1.0"
-regex = "^1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-nom = { version="^5", default-features = false, features = ["regex"] }
+nom = { version="^5", default-features = true, features = ["regex"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 nom = { version="^5", default-features = false, features = ["regex"] }
