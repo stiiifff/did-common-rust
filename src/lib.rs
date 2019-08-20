@@ -1,14 +1,13 @@
 // #![no_main]
-#![no_std]
+// #![no_std]
 
-#[macro_use] extern crate lazy_static;
-
+extern crate alloc;
 extern crate nom;
 pub mod did_parser;
 
 #[cfg(test)]
 mod tests {
-    use super::did_parser::{parse_did, DID};
+    use super::did_parser::{parse_did, DIDParam, DID};
 
     #[test]
     fn parse_generic_did() {
@@ -70,5 +69,65 @@ mod tests {
                 DID::new("v1", "uuid:804c6ac3-ce3b-46ce-b134-17175d5bee74")
             ))
         )
+    }
+
+    #[test]
+    fn parse_did_with_generic_param() {
+        assert_eq!(
+            parse_did("did:example:1234;service=agent"),
+            Ok((
+                "",
+                DID {
+                    method_name: "example",
+                    method_specific_id: "1234",
+                    params: Some(vec!(DIDParam {
+                        name: "service",
+                        value: Some("agent")
+                    }))
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_did_with_method_specific_param() {
+        assert_eq!(
+            parse_did("did:example:1234;example:foo:bar=baz"),
+            Ok((
+                "",
+                DID {
+                    method_name: "example",
+                    method_specific_id: "1234",
+                    params: Some(vec!(DIDParam {
+                        name: "example:foo:bar",
+                        value: Some("baz")
+                    }))
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_did_with_multiple_params() {
+        assert_eq!(
+            parse_did("did:example:1234;service=agent;example:foo:bar=baz"),
+            Ok((
+                "",
+                DID {
+                    method_name: "example",
+                    method_specific_id: "1234",
+                    params: Some(vec!(
+                        DIDParam {
+                            name: "service",
+                            value: Some("agent")
+                        },
+                        DIDParam {
+                            name: "example:foo:bar",
+                            value: Some("baz")
+                        }
+                    )),
+                }
+            ))
+        );
     }
 }
