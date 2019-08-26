@@ -1,4 +1,4 @@
-did-parser
+did-common
 ==========
 
 [![Build Status](https://app.codeship.com/projects/db6e3400-a583-0137-4b80-166c57de4e20/status?branch=master)](https://app.codeship.com/projects/360660)
