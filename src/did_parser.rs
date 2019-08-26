@@ -12,7 +12,7 @@ use nom::{
 // Implement a parser for Decentralized Identifiers following the syntax defined at:
 // https://w3c-ccg.github.io/did-spec/#generic-did-syntax
 
-const DID_SCHEME: &str = "did";
+pub const DID_SCHEME: &str = "did";
 const COLON_SEP: &str = ":";
 const SEMICOLON_SEP: &str = ";";
 const EQUAL_SEP: &str = "=";
