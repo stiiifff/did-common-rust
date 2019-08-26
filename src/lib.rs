@@ -1,5 +1,6 @@
 // #![no_main]
 // #![no_std]
+use std::fmt;
 
 extern crate nom;
 mod did_parser;
@@ -54,10 +55,88 @@ impl<'a> DID<'a> {
     }
 }
 
+impl<'a> DIDParam<'a> {
+    pub fn new(name: &'a str, value: Option<&'a str>) -> DIDParam<'a> {
+        DIDParam { name, value }
+    }
+}
+
+impl fmt::Display for DIDParam<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{}",
+            self.name,
+            match self.value {
+                Some(val) => format!("={}", val),
+                None => String::new()
+            }
+        )
+    }
+}
+
+impl fmt::Display for DID<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}:{}{}",
+            did_parser::DID_SCHEME,
+            self.method_name,
+            self.method_specific_id,
+            match &self.params {
+                Some(params) => format!(";{}", params.iter().map(ToString::to_string).collect::<Vec<_>>().join(";")),
+                None => String::new()
+            }
+        )
+    }
+}
+
 #[macro_export]
 macro_rules! did {
     ($did: expr) => {
         //TODO: If cannot parse, should generate error w/ parsing error
         DID::parse($did).unwrap()
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DID, DIDParam};
+
+    #[test]
+    fn didparam_impl_display_trait() { 
+        assert_eq!(
+            format!("{}", DIDParam::new("service", None)),
+            "service"            
+        );
+        assert_eq!(
+            format!("{}", DIDParam::new("service", Some("agent"))),
+            "service=agent"            
+        );
+    }
+
+    #[test]
+    fn did_impl_display_trait() {
+        assert_eq!(
+            format!("{}", DID::new("example", "")),
+            "did:example:"
+        );
+        assert_eq!(
+            format!("{}", DID::new("example", "1234")),
+            "did:example:1234"
+        );
+        assert_eq!(
+            format!("{}",
+                DID::with_params("example", "1234", vec![
+                    ("service", Some("agent"))
+                ])
+            ),
+            "did:example:1234;service=agent"
+        );
+        assert_eq!(
+            format!("{}",
+                DID::with_params("example", "1234", vec![
+                    ("service", Some("agent")),
+                    ("example:foo:bar", Some("baz"))
+                ])
+            ),
+            "did:example:1234;service=agent;example:foo:bar=baz"
+        );
+    }
 }
