@@ -1,13 +1,13 @@
 [package]
-name = "did-parser"
+name = "did-common"
 version = "0.1.0"
-authors = ["Steve Degosserie <steve@block0.io>"]
+authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/stiiifff/did-parser"
-repository = "https://github.com/stiiifff/did-parser"
-documentation = "https://docs.rs/did-parser"
+homepage = "https://github.com/stiiifff/did-common-rust"
+repository = "https://github.com/stiiifff/did-common-rust"
+documentation = "https://docs.rs/did-common-rust"
 description = """
 A rust library for parsing Decentralized Identifiers (DIDs) following
 the [DID specification](https://w3c-ccg.github.io/did-spec/) by the W3C.
@@ -19,7 +19,7 @@ keywords = ["decentralized-id","did"]
 [dependencies]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-nom = { version="^5", default-features = true, features = ["regex"] }
+nom = { version="^5", default-features = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-nom = { version="^5", default-features = false, features = ["regex"] }
+nom = { version="^5", default-features = true }
