@@ -57,6 +57,7 @@ impl<'a> DID<'a> {
 #[macro_export]
 macro_rules! did {
     ($did: expr) => {
+        //TODO: If cannot parse, should generate error w/ parsing error
         DID::parse($did).unwrap()
     };
 }
