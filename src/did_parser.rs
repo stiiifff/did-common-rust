@@ -1,4 +1,4 @@
-use crate::DID;
+use super::DID;
 
 use nom::{
     bytes::complete::tag,

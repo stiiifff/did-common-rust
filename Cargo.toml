@@ -1,5 +1,5 @@
 [package]
-name = "did-common-rust"
+name = "did-common"
 version = "0.1.0"
 authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
