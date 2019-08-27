@@ -3,7 +3,9 @@
 use std::fmt;
 
 extern crate nom;
+extern crate json;
 mod did_parser;
+mod diddoc_parser;
 
 #[derive(Debug, PartialEq)]
 pub struct DID<'a> {
@@ -16,6 +18,13 @@ pub struct DID<'a> {
 pub struct DIDParam<'a> {
     pub name: &'a str,
     pub value: Option<&'a str>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DIDDocument<'a> {
+    pub context: &'a str,
+    pub id: DID<'a>,
+    // pub pub_keys: 
 }
 
 impl<'a> DID<'a> {
@@ -84,6 +93,15 @@ impl fmt::Display for DID<'_> {
                 None => String::new()
             }
         )
+    }
+}
+
+impl<'a> DIDDocument<'a> {
+    pub fn new(did: DID<'a>) -> DIDDocument<'a> {
+        DIDDocument {
+            context: diddoc_parser::GENERIC_DID_CTX,
+            id: did
+        }
     }
 }
 
