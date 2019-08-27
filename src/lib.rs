@@ -23,7 +23,7 @@ pub struct DIDParam<'a> {
 #[derive(Debug, PartialEq)]
 pub struct DIDDocument<'a> {
     pub context: &'a str,
-    pub id: DID<'a>,
+    pub id: &'a str,
     // pub pub_keys: 
 }
 
@@ -101,7 +101,7 @@ impl fmt::Display for DID<'_> {
 }
 
 impl<'a> DIDDocument<'a> {
-    pub fn new(did: DID<'a>) -> DIDDocument<'a> {
+    pub fn new(did: &'a str) -> DIDDocument<'a> {
         DIDDocument {
             context: diddoc_parser::GENERIC_DID_CTX,
             id: did

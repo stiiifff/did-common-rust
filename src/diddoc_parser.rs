@@ -7,7 +7,7 @@ const SUBJECT_PROP: &str = "id";
 
 pub fn parse_did_doc<'a>(input: &'a str) -> Result<DIDDocument , &'a str> {
     let json = parse(input).map_err(|_| "Failed to parse did document.")?;
-    println!("{?:}", json);
+    println!("{:?}", json);
 
     let _ctx = match json[CONTEXT_PROP].as_str() {
         Some(GENERIC_DID_CTX) => Ok(GENERIC_DID_CTX),
@@ -28,9 +28,7 @@ pub fn parse_did_doc<'a>(input: &'a str) -> Result<DIDDocument , &'a str> {
     }?;
 
     Ok(
-        DIDDocument::new(
-            DID::new("", "")
-        )
+        DIDDocument::new("")
     )
 }
 
@@ -98,7 +96,7 @@ mod tests {
                 "id": "did:example:21tDAKCERh95uGgKbJNHYp"
             }
             "#),
-            Ok(DIDDocument::new(DID::new("example", "21tDAKCERh95uGgKbJNHYp")))
+            Ok(DIDDocument::new("did:example:21tDAKCERh95uGgKbJNHYp"))
         );
     }
 }
