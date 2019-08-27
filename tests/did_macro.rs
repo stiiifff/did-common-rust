@@ -9,20 +9,34 @@ fn did_macro_generic_did() {
 }
 
 #[test]
-fn did_macro_generic_id_with_empty_method_id() {
+fn did_macro_generic_did_with_empty_method_id() {
     assert_eq!(
         did!("did:example:"),
         DID::new("example", "")
     );
 }
 
-// #[test]
-// fn did_macro_btcr_did_with_key() {
-//     assert_eq!(
-//         did_macro_did("did:btcr:xyv2-xzpq-q9wa-p7t#satoshi"),
-//         Ok(("#satoshi", DID::new("btcr", "xyv2-xzpq-q9wa-p7t")))
-//     )
-// }
+#[test]
+fn did_macro_generic_did_with_fragment() {
+    let mut did = DID::new("example", "123456789abcdefghi");
+    did.fragment = Some("keys-1");
+
+    assert_eq!(
+        did!("did:example:123456789abcdefghi#keys-1"),
+        did
+    )
+}
+
+#[test]
+fn did_macro_btcr_did_with_key() {
+    let mut did = DID::new("btcr", "xyv2-xzpq-q9wa-p7t");
+    did.fragment = Some("satoshi");
+
+    assert_eq!(
+        did!("did:btcr:xyv2-xzpq-q9wa-p7t#satoshi"),
+        did
+    )
+}
 
 #[test]
 fn did_macro_ethr_did() {
@@ -66,7 +80,8 @@ fn did_macro_did_with_generic_param() {
             params: Some(vec!(DIDParam {
                 name: "service",
                 value: Some("agent")
-            }))
+            })),
+            fragment: None
         }
     );
 }
@@ -81,7 +96,8 @@ fn did_macro_did_with_method_specific_param() {
             params: Some(vec!(DIDParam {
                 name: "example:foo:bar",
                 value: Some("baz")
-            }))
+            })),
+            fragment: None
         }
     );
 }
@@ -103,6 +119,29 @@ fn did_macro_did_with_multiple_params() {
                     value: Some("baz")
                 }
             )),
+            fragment: None
+        }
+    );
+}
+
+#[test]
+fn did_macro_did_with_multiple_params_and_fragment() {
+    assert_eq!(
+        did!("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
+        DID {
+            method_name: "example",
+            method_specific_id: "1234",
+            params: Some(vec!(
+                DIDParam {
+                    name: "service",
+                    value: Some("agent")
+                },
+                DIDParam {
+                    name: "example:foo:bar",
+                    value: Some("baz")
+                }
+            )),
+            fragment: Some("keys-1")
         }
     );
 }
