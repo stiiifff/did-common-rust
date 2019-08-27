@@ -56,6 +56,10 @@ impl<'a> DID<'a> {
         }
     }
 
+    pub fn is_valid(did_string: &str) -> bool {
+        did_parser::validate_did(did_string)
+    } 
+
     pub fn parse(did_string: &'a str) -> Result<Self, &'a str> {
         match did_parser::parse_did(did_string) {
             Ok((_, did)) => Ok(did),
