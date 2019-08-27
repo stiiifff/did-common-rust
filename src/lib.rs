@@ -12,6 +12,7 @@ pub struct DID<'a> {
     pub method_name: &'a str,
     pub method_specific_id: &'a str,
     pub params: Option<Vec<DIDParam<'a>>>,
+    pub fragment: Option<&'a str>
 }
 
 #[derive(Debug, PartialEq)]
@@ -33,6 +34,7 @@ impl<'a> DID<'a> {
             method_name,
             method_specific_id,
             params: None,
+            fragment: None
         }
     }
 
@@ -53,6 +55,7 @@ impl<'a> DID<'a> {
                     })
                     .collect(),
             ),
+            fragment: None
         }
     }
 
