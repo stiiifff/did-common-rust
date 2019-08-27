@@ -122,3 +122,11 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
 
     Ok((input, did))
 }
+
+pub fn validate_did<'a>(input: &'a str) -> bool {
+    let (input, _) = did_scheme(input);
+    let (input, method_name) = method_name(input);
+    let (input, method_id) = method_specific_id(input);
+    let (input, params) = generic_params(input);
+    
+}

@@ -1,6 +1,11 @@
 use did_common::{did, DID, DIDParam};
 
 #[test]
+fn generic_did_is_valid() {
+    assert_eq!(DID::is_valid("did:example:1234"), true);
+}
+
+#[test]
 fn parse_generic_did() {
     assert_eq!(
         did!("did:example:1234"),
