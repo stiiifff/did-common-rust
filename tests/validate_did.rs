@@ -1,0 +1,31 @@
+use did_common::{DID};
+
+#[test]
+fn validate_generic_did() {
+    assert_eq!(DID::is_valid("did:example:1234"), true);
+}
+
+#[test]
+fn validate_did_with_missing_method_name() {
+    assert_eq!(DID::is_valid("did::123456"), false);
+}
+
+#[test]
+fn validate_did_with_invalid_method_name() {
+    assert_eq!(DID::is_valid("did:EXAMPLE:123456"), false);
+}
+
+#[test]
+fn validate_ethr_did() {
+   assert_eq!(DID::is_valid("did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"), true);
+}
+
+#[test]
+fn validate_did_with_generic_param() {
+    assert_eq!(DID::is_valid("did:example:1234"), true);
+}
+
+#[test]
+fn validate_did_with_multiple_params() {
+    assert_eq!(DID::is_valid("did:example:1234;service=agent;example:foo:bar=baz"), true);
+}
