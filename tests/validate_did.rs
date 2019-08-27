@@ -6,6 +6,14 @@ fn validate_generic_did() {
 }
 
 #[test]
+fn validate_generic_did_with_fragment() {
+    assert_eq!(
+        DID::is_valid("did:example:123456789abcdefghi#keys-1"),
+        true
+    )
+}
+
+#[test]
 fn validate_did_with_missing_method_name() {
     assert_eq!(DID::is_valid("did::123456"), false);
 }
@@ -28,4 +36,12 @@ fn validate_did_with_generic_param() {
 #[test]
 fn validate_did_with_multiple_params() {
     assert_eq!(DID::is_valid("did:example:1234;service=agent;example:foo:bar=baz"), true);
+}
+
+#[test]
+fn parse_did_with_multiple_params_and_fragment() {
+    assert_eq!(
+        DID::is_valid("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
+        true
+    );
 }
