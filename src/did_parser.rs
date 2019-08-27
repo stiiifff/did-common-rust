@@ -123,10 +123,10 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
     Ok((input, did))
 }
 
-pub fn validate_did<'a>(input: &'a str) -> bool {
-    let (input, _) = did_scheme(input);
-    let (input, method_name) = method_name(input);
-    let (input, method_id) = method_specific_id(input);
-    let (input, params) = generic_params(input);
-    
+pub fn validate_did(input: &str) -> bool {
+    did_scheme::<(&str, ErrorKind)>(input)
+        .and_then(|(input, _)| method_name(input))
+        .and_then(|(input, _)| method_specific_id(input))
+        .and_then(|(input, _)| generic_params(input))
+        .map(|_| true).unwrap_or(false)
 }
