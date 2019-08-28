@@ -22,10 +22,37 @@ pub struct DIDParam<'a> {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum PublicKeyType {
+    Ed25519,
+    Rsa,
+    EcdsaKoblitz,
+    EcdsaSecp256k1
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PublicKeyFormat {
+    Pem(String),
+    Jwk(String),
+    Hex(String),
+    Base64(String),
+    Base58(String),
+    Multibase(String),
+    EthrAddress(String)
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PublicKey<'a> {
+    pub id: &'a str,
+    pub r#type: PublicKeyType,
+    pub controller: &'a str,
+    pub pub_key: PublicKeyFormat
+}
+
+#[derive(Debug, PartialEq)]
 pub struct DIDDocument<'a> {
     pub context: &'a str,
     pub id: String,
-    // pub pub_keys: 
+    pub pub_keys: Vec<PublicKey<'a>>
 }
 
 impl<'a> DID<'a> {
@@ -107,7 +134,16 @@ impl<'a> DIDDocument<'a> {
     pub fn new<S>(did: S) -> DIDDocument<'a> where S: Into<String> {
         DIDDocument {
             context: diddoc_parser::GENERIC_DID_CTX,
-            id: did.into()
+            id: did.into(),
+            pub_keys: vec![]
+        }
+    }
+
+    pub fn with_pubkeys<S>(did: S, pub_keys: std::vec::Vec<PublicKey<'a>>) -> DIDDocument<'a> where S: Into<String> {
+        DIDDocument {
+            context: diddoc_parser::GENERIC_DID_CTX,
+            id: did.into(),
+            pub_keys: pub_keys
         }
     }
 

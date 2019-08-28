@@ -1,4 +1,4 @@
-use did_common::{DIDDocument};
+use did_common::{DIDDocument, PublicKey, PublicKeyType, PublicKeyFormat};
 
 #[test]
 fn parse_did_doc_with_missing_context() {
@@ -60,5 +60,30 @@ fn parse_minimal_did_doc() {
         }
         "#),
         Ok(DIDDocument::new("did:example:21tDAKCERh95uGgKbJNHYp".to_string()))
+    );
+}
+
+#[test]
+fn parse_did_doc_with_ed25519_pubkey() {
+    assert_eq!(
+        DIDDocument::parse(r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:21tDAKCERh95uGgKbJNHYp",
+            "publicKey": [{
+                "id": "did:example:123456789abcdefghi#keys-1",
+                "type": "Ed25519VerificationKey2018",
+                "controller": "did:example:pqrstuvwxyz0987654321",
+                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+            }]
+        }
+        "#),
+        Ok(DIDDocument::with_pubkeys("did:example:21tDAKCERh95uGgKbJNHYp".to_string(),
+            vec![
+                PublicKey {
+                    id: "", r#type: PublicKeyType::Rsa, controller: "",
+                    pub_key: PublicKeyFormat::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n".to_string())
+                }
+            ]))
     );
 }
