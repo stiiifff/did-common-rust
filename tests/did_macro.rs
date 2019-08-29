@@ -1,10 +1,10 @@
-use did_common::{did, DID, DIDParam};
+use did_common::{did, Did, DidParam};
 
 #[test]
 fn did_macro_generic_did() {
     assert_eq!(
         did!("did:example:1234"),
-        DID::new("example", "1234")
+        Did::new("example", "1234")
     );
 }
 
@@ -12,13 +12,13 @@ fn did_macro_generic_did() {
 fn did_macro_generic_did_with_empty_method_id() {
     assert_eq!(
         did!("did:example:"),
-        DID::new("example", "")
+        Did::new("example", "")
     );
 }
 
 #[test]
 fn did_macro_generic_did_with_fragment() {
-    let mut did = DID::new("example", "123456789abcdefghi");
+    let mut did = Did::new("example", "123456789abcdefghi");
     did.fragment = Some("keys-1");
 
     assert_eq!(
@@ -29,7 +29,7 @@ fn did_macro_generic_did_with_fragment() {
 
 #[test]
 fn did_macro_btcr_did_with_key() {
-    let mut did = DID::new("btcr", "xyv2-xzpq-q9wa-p7t");
+    let mut did = Did::new("btcr", "xyv2-xzpq-q9wa-p7t");
     did.fragment = Some("satoshi");
 
     assert_eq!(
@@ -42,7 +42,7 @@ fn did_macro_btcr_did_with_key() {
 fn did_macro_ethr_did() {
     assert_eq!(
         did!("did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"),
-        DID::new("ethr", "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74")
+        Did::new("ethr", "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74")
     );
 }
 
@@ -50,7 +50,7 @@ fn did_macro_ethr_did() {
 fn did_macro_sovrin_did() {
     assert_eq!(
         did!("did:sov:2wJPyULfLLnYTEFYzByfUR"),
-        DID::new("sov", "2wJPyULfLLnYTEFYzByfUR")
+        Did::new("sov", "2wJPyULfLLnYTEFYzByfUR")
     );
 }
 
@@ -58,7 +58,7 @@ fn did_macro_sovrin_did() {
 fn did_macro_erc725_did() {
     assert_eq!(
         did!("did:erc725:ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"),
-        DID::new("erc725", "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E")
+        Did::new("erc725", "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E")
     )
 }
 
@@ -66,7 +66,7 @@ fn did_macro_erc725_did() {
 fn did_macro_veres_one_did() {
     assert_eq!(
         did!("did:v1:uuid:804c6ac3-ce3b-46ce-b134-17175d5bee74"),
-        DID::new("v1", "uuid:804c6ac3-ce3b-46ce-b134-17175d5bee74")
+        Did::new("v1", "uuid:804c6ac3-ce3b-46ce-b134-17175d5bee74")
     )
 }
 
@@ -74,10 +74,10 @@ fn did_macro_veres_one_did() {
 fn did_macro_did_with_generic_param() {
     assert_eq!(
         did!("did:example:1234;service=agent"),
-        DID {
+        Did {
             method_name: "example",
             method_specific_id: "1234",
-            params: Some(vec!(DIDParam {
+            params: Some(vec!(DidParam {
                 name: "service",
                 value: Some("agent")
             })),
@@ -90,10 +90,10 @@ fn did_macro_did_with_generic_param() {
 fn did_macro_did_with_method_specific_param() {
     assert_eq!(
         did!("did:example:1234;example:foo:bar=baz"),
-        DID {
+        Did {
             method_name: "example",
             method_specific_id: "1234",
-            params: Some(vec!(DIDParam {
+            params: Some(vec!(DidParam {
                 name: "example:foo:bar",
                 value: Some("baz")
             })),
@@ -106,15 +106,15 @@ fn did_macro_did_with_method_specific_param() {
 fn did_macro_did_with_multiple_params() {
     assert_eq!(
         did!("did:example:1234;service=agent;example:foo:bar=baz"),
-        DID {
+        Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(
-                DIDParam {
+                DidParam {
                     name: "service",
                     value: Some("agent")
                 },
-                DIDParam {
+                DidParam {
                     name: "example:foo:bar",
                     value: Some("baz")
                 }
@@ -128,15 +128,15 @@ fn did_macro_did_with_multiple_params() {
 fn did_macro_did_with_multiple_params_and_fragment() {
     assert_eq!(
         did!("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
-        DID {
+        Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(
-                DIDParam {
+                DidParam {
                     name: "service",
                     value: Some("agent")
                 },
-                DIDParam {
+                DidParam {
                     name: "example:foo:bar",
                     value: Some("baz")
                 }

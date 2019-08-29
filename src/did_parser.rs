@@ -1,4 +1,4 @@
-use super::DID;
+use super::Did;
 
 use nom::{
     bytes::complete::tag,
@@ -142,7 +142,7 @@ fn fragment<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Opti
     )(input)
 }
 
-pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
+pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, Did<'a>> {
     //TODO: refactor this with method chaining (as in validate_did)
     // and a builder for the DID struct (capture DID instance in
     // and_then closures, and call builder methods)
@@ -154,8 +154,8 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
     assert_eq!(_empty, String::new());
 
     let mut did = match params {
-        Some(params) => DID::with_params(method_name, method_id, params),
-        None => DID::new(method_name, method_id),
+        Some(params) => Did::with_params(method_name, method_id, params),
+        None => Did::new(method_name, method_id),
     };
 
     if let Some(_fragment) = fragment {
