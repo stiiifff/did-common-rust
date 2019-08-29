@@ -1,19 +1,14 @@
-use did_common::{did, Did, DidParam};
+use did_common::did;
+use did_common::did::{Did, DidParam};
 
 #[test]
 fn did_macro_generic_did() {
-    assert_eq!(
-        did!("did:example:1234"),
-        Did::new("example", "1234")
-    );
+    assert_eq!(did!("did:example:1234"), Did::new("example", "1234"));
 }
 
 #[test]
 fn did_macro_generic_did_with_empty_method_id() {
-    assert_eq!(
-        did!("did:example:"),
-        Did::new("example", "")
-    );
+    assert_eq!(did!("did:example:"), Did::new("example", ""));
 }
 
 #[test]
@@ -21,10 +16,7 @@ fn did_macro_generic_did_with_fragment() {
     let mut did = Did::new("example", "123456789abcdefghi");
     did.fragment = Some("keys-1");
 
-    assert_eq!(
-        did!("did:example:123456789abcdefghi#keys-1"),
-        did
-    )
+    assert_eq!(did!("did:example:123456789abcdefghi#keys-1"), did)
 }
 
 #[test]
@@ -32,10 +24,7 @@ fn did_macro_btcr_did_with_key() {
     let mut did = Did::new("btcr", "xyv2-xzpq-q9wa-p7t");
     did.fragment = Some("satoshi");
 
-    assert_eq!(
-        did!("did:btcr:xyv2-xzpq-q9wa-p7t#satoshi"),
-        did
-    )
+    assert_eq!(did!("did:btcr:xyv2-xzpq-q9wa-p7t#satoshi"), did)
 }
 
 #[test]

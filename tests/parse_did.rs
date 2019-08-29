@@ -1,4 +1,4 @@
-use did_common::{Did, DidParam};
+use did_common::did::{Did, DidParam};
 
 #[test]
 fn parse_generic_did() {
@@ -10,10 +10,7 @@ fn parse_generic_did() {
 
 #[test]
 fn parse_generic_did_with_empty_method_id() {
-    assert_eq!(
-        Did::parse("did:example:"),
-        Ok(Did::new("example", ""))
-    );
+    assert_eq!(Did::parse("did:example:"), Ok(Did::new("example", "")));
 }
 
 #[test]
@@ -21,10 +18,7 @@ fn parse_generic_did_with_fragment() {
     let mut did = Did::new("example", "123456789abcdefghi");
     did.fragment = Some("keys-1");
 
-    assert_eq!(
-        Did::parse("did:example:123456789abcdefghi#keys-1"),
-        Ok(did)
-    )
+    assert_eq!(Did::parse("did:example:123456789abcdefghi#keys-1"), Ok(did))
 }
 
 #[test]
@@ -42,7 +36,10 @@ fn parse_btcr_did_with_key() {
 fn parse_ethr_did() {
     assert_eq!(
         Did::parse("did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"),
-        Ok(Did::new("ethr", "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"))
+        Ok(Did::new(
+            "ethr",
+            "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"
+        ))
     );
 }
 
@@ -58,7 +55,10 @@ fn parse_sovrin_did() {
 fn parse_erc725_did() {
     assert_eq!(
         Did::parse("did:erc725:ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"),
-        Ok(Did::new("erc725", "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"))
+        Ok(Did::new(
+            "erc725",
+            "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"
+        ))
     )
 }
 
@@ -74,8 +74,7 @@ fn parse_veres_one_did() {
 fn parse_did_with_generic_param() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent"),
-        Ok(
-            Did {
+        Ok(Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(DidParam {
@@ -91,8 +90,7 @@ fn parse_did_with_generic_param() {
 fn parse_did_with_method_specific_param() {
     assert_eq!(
         Did::parse("did:example:1234;example:foo:bar=baz"),
-        Ok(
-            Did {
+        Ok(Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(DidParam {
@@ -108,8 +106,7 @@ fn parse_did_with_method_specific_param() {
 fn parse_did_with_multiple_params() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent;example:foo:bar=baz"),
-        Ok(
-            Did {
+        Ok(Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(
@@ -131,8 +128,7 @@ fn parse_did_with_multiple_params() {
 fn parse_did_with_multiple_params_and_fragment() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
-        Ok(
-            Did {
+        Ok(Did {
             method_name: "example",
             method_specific_id: "1234",
             params: Some(vec!(

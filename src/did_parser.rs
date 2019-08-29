@@ -1,4 +1,4 @@
-use super::Did;
+use crate::did::Did;
 
 use nom::{
     bytes::complete::tag,
@@ -134,12 +134,7 @@ fn generic_params<'a, E: ParseError<&'a str>>(
 }
 
 fn fragment<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Option<&'a str>, E> {
-    opt(
-        preceded(
-            tag(FRAGMENT_SEP),
-            fragment_char0
-        )
-    )(input)
+    opt(preceded(tag(FRAGMENT_SEP), fragment_char0))(input)
 }
 
 pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, Did<'a>> {
@@ -171,5 +166,6 @@ pub fn validate_did(input: &str) -> bool {
         .and_then(|(input, _)| method_specific_id(input))
         .and_then(|(input, _)| generic_params(input))
         .and_then(|(input, _)| fragment(input))
-        .map(|_| true).unwrap_or(false)
+        .map(|_| true)
+        .unwrap_or(false)
 }
