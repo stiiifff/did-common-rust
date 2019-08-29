@@ -1,5 +1,6 @@
 // #![no_main]
 // #![no_std]
+use std::str::FromStr;
 use std::fmt;
 
 extern crate nom;
@@ -23,14 +24,29 @@ pub struct DIDParam<'a> {
 
 #[derive(Debug, PartialEq)]
 pub enum PublicKeyType {
-    Ed25519,
     Rsa,
-    EcdsaKoblitz,
+    Ed25519,
     EcdsaSecp256k1
 }
 
+//TODO: implement PublicKeyTypeError see https://doc.rust-lang.org/src/std/net/parser.rs.html#390
+//TODO: write tests for PublicKeyType parsing 
+impl FromStr for PublicKeyType {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        type Err = ParsePublicKeyTypeError;
+        match s {
+            "RsaVerificationKey2018" => Ok(Self::Rsa),
+            "Ed25519VerificationKey2018" => Ok(Self::EcdsaSecp256k1),
+            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecp256k1),
+            _ => Result::Err(Err)
+        }
+    }
+}
+
+//TODO: have a look at the did-common-typescript how they call this thing
+// Maybe PublicKey(Formatted)Value ?
 #[derive(Debug, PartialEq)]
-pub enum PublicKeyFormat {
+pub enum PublicKeyFormatted {
     Pem(String),
     Jwk(String),
     Hex(String),
