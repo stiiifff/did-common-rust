@@ -1,4 +1,4 @@
-use crate::did::Did;
+use crate::did::{Did, DidBuilder};
 
 use nom::{
     bytes::complete::tag,
@@ -148,16 +148,15 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, Did<'a>> {
     let (_empty, fragment) = fragment(input)?;
     assert_eq!(_empty, String::new());
 
-    let mut did = match params {
-        Some(params) => Did::with_params(method_name, method_id, params),
-        None => Did::new(method_name, method_id),
-    };
-
-    if let Some(_fragment) = fragment {
-        did.fragment = fragment;
+    let mut did = DidBuilder::new(method_name, method_id);
+    if let Some(params) = params {
+        did.with_params(params.into_iter());
+    }
+    if let Some(fragment) = fragment {
+        did.with_fragment(fragment);
     }
 
-    Ok((input, did))
+    Ok((input, did.build()))
 }
 
 pub fn validate_did(input: &str) -> bool {
