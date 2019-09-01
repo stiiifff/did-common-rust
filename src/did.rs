@@ -12,19 +12,22 @@ pub struct Did<'a> {
 }
 
 impl<'a> Did<'a> {
-    pub fn method_name(self) -> &'a str {
+    pub fn method_name(&self) -> &'a str {
         self.method_name
     }
 
-    pub fn method_specific_id(self) -> &'a str {
+    pub fn method_specific_id(&self) -> &'a str {
         self.method_specific_id
     }
 
-    pub fn params(self) -> Option<Vec<DidParam<'a>>> {
-        self.params
+    pub fn params(&self) -> Option<&[DidParam<'a>]> {
+        match &self.params {
+            Some(params) => Some(&params[..]),
+            None => None
+        }
     }
 
-    pub fn fragment(self) -> Option<&'a str> {
+    pub fn fragment(&self) -> Option<&'a str> {
         self.fragment
     }
 
@@ -44,10 +47,10 @@ impl fmt::Display for Did<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}:{}:{}{}",
+            "{}:{}:{}{}{}",
             did_parser::DID_SCHEME,
             self.method_name,
-            self.method_specific_id,
+            self.method_specific_id,            
             match &self.params {
                 Some(params) => format!(
                     ";{}",
@@ -58,7 +61,11 @@ impl fmt::Display for Did<'_> {
                         .join(";")
                 ),
                 None => String::new(),
-            }
+            },
+            match &self.fragment {
+                Some(fragment) => format!("#{}", fragment),
+                None => String::new()
+            },
         )
     }
 }
@@ -80,15 +87,21 @@ impl<'a> DidBuilder<'a> {
             fragment: None,
         }
     }
-
-    pub fn with_params(&mut self, params: impl Iterator<Item=(&'a str, Option<&'a str>)>) -> &mut Self {
+    
+    pub fn with_params<T: 'a, I: 'a>(&'a mut self, params: T) -> &'a mut Self 
+        where T: IntoIterator<Item=I>,
+              I: Into<DidParam<'a>>
+    {
         self.params = Some(
-            params.map(|p| p.into()).collect()
+            params
+                .into_iter()
+                .map(|p| p.into())
+                .collect()
         );
         self
     }
 
-    pub fn with_fragment(&mut self, fragment: &'a str) -> &mut Self {
+    pub fn with_fragment(&'a mut self, fragment: &'a str) -> &'a mut Self {
         self.fragment = Some(fragment);
         self
     }
@@ -123,14 +136,33 @@ impl<'a> DidParam<'a> {
     }
 }
 
-impl<'a> From<(&'a str, Option<&'a str>)> for DidParam<'a> {
-    fn from(param: (&'a str, Option<&'a str>)) -> Self {
+type ParamTuple<'a> = (&'a str, &'a str);
+type ParamOptionTuple<'a> = (&'a str, Option<&'a str>);
+
+impl<'a> From<ParamOptionTuple<'a>> for DidParam<'a> {
+    fn from(param: ParamOptionTuple<'a>) -> Self {
         DidParam::new(param.0, param.1)
     }
 }
 
-impl<'a> From<(&'a str, &'a str)> for DidParam<'a> {
-    fn from(param: (&'a str, &'a str)) -> Self {
+impl<'a> From<ParamTuple<'a>> for DidParam<'a> {
+    fn from(param: ParamTuple<'a>) -> Self {
+        DidParam::new(param.0, Some(param.1))
+    }
+}
+
+//TODO: there is probably way than having to implement
+//a From trait variant with &ParamOptionTuple (maybe using AsRef trait ?)
+impl<'a> From<&ParamOptionTuple<'a>> for DidParam<'a> {
+    fn from(param: &ParamOptionTuple<'a>) -> Self {
+        DidParam::new(param.0, param.1)
+    }
+}
+
+//TODO: there is probably way than having to implement
+//a From trait variant with &ParamTuple (maybe using AsRef trait ?)
+impl<'a> From<&ParamTuple<'a>> for DidParam<'a> {
+    fn from(param: &ParamTuple<'a>) -> Self {
         DidParam::new(param.0, Some(param.1))
     }
 }
@@ -154,6 +186,20 @@ mod tests {
     use super::{Did, DidBuilder, DidParam};
 
     #[test]
+    fn did_property_accessors() {
+        let did = Did {
+            method_name: "example",
+            method_specific_id: "1234",
+            fragment: Some("keys-1"),
+            params: Some(vec![DidParam{name:"example", value:None}])
+        };
+        assert_eq!(did.method_name(), "example");
+        assert_eq!(did.method_specific_id(), "1234");
+        assert_eq!(did.fragment(), Some("keys-1"));
+        assert_eq!(did.params(), Some(&[DidParam{name:"example", value:None}][..]));
+    }
+
+    #[test]
     fn did_builder_for_simple_did() {
         assert_eq!(
             DidBuilder::new("example", "1234").build(),
@@ -161,42 +207,109 @@ mod tests {
         )
     }
 
-    // #[test]
-    // fn DidBuilder_works_for_did_with_params() {
-    //     assert_eq!(
-    //         DidBuilder::new("example", "1234")
-    //             .with_params([("service", Option::<&str>::None)])
-    //             .build(),
-    //         Did { method_name: "example", method_specific_id: "1234", fragment: None, params: None }
-    //     )
-    // }
+    #[test]
+    fn did_builder_for_did_with_params() {
+        assert_eq!(
+            DidBuilder::new("example", "1234")
+                .with_params(&[
+                    ("service", None),
+                    ("example:foo:bar",Some("baz"))
+                ])
+                .build(),
+            Did {
+                method_name: "example",
+                method_specific_id: "1234",
+                fragment: None,
+                params: Some(vec![
+                    DidParam {name:"service", value:None},
+                    DidParam {name:"example:foo:bar", value:Some("baz")}
+                ])
+            }
+        )
+    }
 
-    // #[test]
-    // fn did_impl_display_trait() {
-    //     assert_eq!(format!("{}", DidBuilder::new("example", "").build()), "did:example:");
-    //     assert_eq!(
-    //         format!("{}", DidBuilder::new("example", "1234").build()),
-    //         "did:example:1234"
-    //     );
-    //     assert_eq!(
-    //         format!(
-    //             "{}",
-    //             DidBuilder::new("example", "1234", vec![("service", Some("agent"))])
-    //         ),
-    //         "did:example:1234;service=agent"
-    //     );
-    //     assert_eq!(
-    //         format!(
-    //             "{}",
-    //             Did::with_params(
-    //                 "example",
-    //                 "1234",
-    //                 vec![("service", Some("agent")), ("example:foo:bar", Some("baz"))]
-    //             )
-    //         ),
-    //         "did:example:1234;service=agent;example:foo:bar=baz"
-    //     );
-    // }
+    #[test]
+    fn did_builder_for_complex_did() {
+        assert_eq!(
+            DidBuilder::new("example", "1234")
+                .with_params(&[
+                    ("service", None),
+                    ("example:foo:bar",Some("baz"))
+                ])
+                .with_fragment("keys-1")
+                .build(),
+            Did {
+                method_name: "example",
+                method_specific_id: "1234",
+                fragment: Some("keys-1"),
+                params: Some(vec![
+                    DidParam {name:"service", value:None},
+                    DidParam {name:"example:foo:bar", value:Some("baz")}
+                ])
+            }
+        )
+    }
+
+    #[test]
+    fn did_impl_display_trait() {
+        assert_eq!(format!("{}", 
+            Did {
+                method_name:"example",
+                method_specific_id:"",
+                fragment: None,
+                params: None
+            }), "did:example:");
+        
+        assert_eq!(
+            format!("{}", 
+                Did {
+                    method_name:"example",
+                    method_specific_id:"1234",
+                    fragment: None,
+                    params: None
+            }),
+            "did:example:1234"
+        );
+
+        assert_eq!(
+            format!("{}", 
+                Did {
+                    method_name:"example",
+                    method_specific_id:"1234",
+                    fragment: Some("keys-1"),
+                    params: None
+            }),
+            "did:example:1234#keys-1"
+        );
+
+        assert_eq!(
+            format!("{}", 
+                Did {
+                    method_name:"example",
+                    method_specific_id:"1234",
+                    fragment: None,
+                    params: Some(vec![
+                        DidParam {name:"service", value:Some("agent")},
+                        DidParam {name:"example:foo:bar", value:Some("baz")}
+                ])
+            }),
+            "did:example:1234;service=agent;example:foo:bar=baz"
+        );
+
+        assert_eq!(
+            format!("{}", 
+                Did {
+                    method_name:"example",
+                    method_specific_id:"1234",
+                    fragment: Some("keys-1"),
+                    params: Some(vec![
+                        DidParam {name:"service", value:Some("agent")},
+                        DidParam {name:"example:foo:bar", value:Some("baz")}
+                ])
+            }),
+            "did:example:1234;service=agent;example:foo:bar=baz#keys-1"
+        );
+    }
 
     #[test]
     fn did_param_ctor_without_value() {
