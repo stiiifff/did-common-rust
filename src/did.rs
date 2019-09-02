@@ -88,7 +88,7 @@ impl<'a> DidBuilder<'a> {
         }
     }
     
-    pub fn with_params<T: 'a, I: 'a>(&'a mut self, params: T) -> &'a mut Self 
+    pub fn with_params<T: 'a, I: 'a>(mut self, params: T) -> Self 
         where T: IntoIterator<Item=I>,
               I: Into<DidParam<'a>>
     {
@@ -101,7 +101,7 @@ impl<'a> DidBuilder<'a> {
         self
     }
 
-    pub fn with_fragment(&'a mut self, fragment: &'a str) -> &'a mut Self {
+    pub fn with_fragment(mut self, fragment: &'a str) -> Self {
         self.fragment = Some(fragment);
         self
     }

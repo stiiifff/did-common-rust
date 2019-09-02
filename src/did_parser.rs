@@ -145,7 +145,7 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, Did<'a>> {
     let (_empty, fragment) = fragment(input)?;
     assert_eq!(_empty, String::new());
 
-    let mut did = &mut DidBuilder::new(method_name, method_id);
+    let mut did = DidBuilder::new(method_name, method_id);
     if let Some(params) = params {
        did = did.with_params(params);
     }
