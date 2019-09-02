@@ -151,7 +151,7 @@ impl<'a> From<ParamTuple<'a>> for DidParam<'a> {
     }
 }
 
-//TODO: there is probably way than having to implement
+//TODO: there is probably a better way than having to implement
 //a From trait variant with &ParamOptionTuple (maybe using AsRef trait ?)
 impl<'a> From<&ParamOptionTuple<'a>> for DidParam<'a> {
     fn from(param: &ParamOptionTuple<'a>) -> Self {
@@ -159,7 +159,7 @@ impl<'a> From<&ParamOptionTuple<'a>> for DidParam<'a> {
     }
 }
 
-//TODO: there is probably way than having to implement
+//TODO: there is probably a better way than having to implement
 //a From trait variant with &ParamTuple (maybe using AsRef trait ?)
 impl<'a> From<&ParamTuple<'a>> for DidParam<'a> {
     fn from(param: &ParamTuple<'a>) -> Self {
