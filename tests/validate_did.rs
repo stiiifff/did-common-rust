@@ -42,7 +42,7 @@ fn validate_did_with_multiple_params() {
 }
 
 #[test]
-fn parse_did_with_multiple_params_and_fragment() {
+fn validate_did_with_multiple_params_and_fragment() {
     assert_eq!(
         Did::is_valid("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
         true
