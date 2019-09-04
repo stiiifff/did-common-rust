@@ -3,7 +3,7 @@ use did_common::did_doc::{
 };
 
 fn json_parse(input: &str) -> json::JsonValue {
-    json::parse(input).unwrap()
+    did_common::json_parse(input).unwrap()
 }
 
 #[test]
