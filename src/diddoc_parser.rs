@@ -1,10 +1,8 @@
 use crate::{
     did::Did,
     did_doc::{
-        DidDocument, DidDocumentBuilder,
-        PublicKey, PublicKeyBuilder,
-        PublicKeyEncoded, PublicKeyType,
-        KEY_FORMATS
+        DidDocument, DidDocumentBuilder, PublicKey, PublicKeyBuilder, PublicKeyEncoded,
+        PublicKeyType, KEY_FORMATS,
     },
 };
 use json::JsonValue;
@@ -55,11 +53,11 @@ fn parse_did_pubkey_list<'a>(json: &'a JsonValue) -> Result<Vec<PublicKey>, &'a 
         let key_ctrl = parse_did_pubkey_ctrl(key)?;
         let key_format = parse_did_pubkey_format(key)?;
         let key_encoded = parse_did_pubkey_encoded(key, key_format)?;
-        
+
         keys.push(
             PublicKeyBuilder::new(key_id, key_type, key_ctrl)
                 .with_encoded_key(key_encoded)
-                .build()
+                .build(),
         );
     }
     Ok(keys)
@@ -99,7 +97,10 @@ fn parse_did_pubkey_format<'a>(key: &'a JsonValue) -> Result<&'a str, &'a str> {
     }
 }
 
-fn parse_did_pubkey_encoded<'a>(key: &'a JsonValue, key_format: &'a str) -> Result<PublicKeyEncoded<'a>, &'a str> {
+fn parse_did_pubkey_encoded<'a>(
+    key: &'a JsonValue,
+    key_format: &'a str,
+) -> Result<PublicKeyEncoded<'a>, &'a str> {
     match key[key_format].as_str() {
         Some(key_enc) => match PublicKeyEncoded::from((key_format, key_enc)) {
             PublicKeyEncoded::Unsupported => Err("unknown DID public key format"),
@@ -109,14 +110,11 @@ fn parse_did_pubkey_encoded<'a>(key: &'a JsonValue, key_format: &'a str) -> Resu
     }
 }
 
-pub fn parse_did_doc<'a>(json: &'a JsonValue) -> Result<DidDocument<'a>, &'a str>
-{
+pub fn parse_did_doc<'a>(json: &'a JsonValue) -> Result<DidDocument<'a>, &'a str> {
     let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
     let sub = parse_did_subject(json)?;
     let keys = parse_did_pubkey_list(json)?;
 
-    let did_doc = DidDocumentBuilder::new(sub)
-        .with_pubkeys(keys)
-        .build();
+    let did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys).build();
     Ok(did_doc)
 }

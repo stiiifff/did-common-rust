@@ -5,14 +5,13 @@ use did_common::did::{Did, DidBuilder};
 fn did_macro_generic_did() {
     assert_eq!(
         did!("did:example:1234"),
-        DidBuilder::new("example", "1234").build());
+        DidBuilder::new("example", "1234").build()
+    );
 }
 
 #[test]
 fn did_macro_generic_did_with_empty_method_id() {
-    assert_eq!(
-        did!("did:example:"),
-        DidBuilder::new("example", "").build());
+    assert_eq!(did!("did:example:"), DidBuilder::new("example", "").build());
 }
 
 #[test]
@@ -69,8 +68,8 @@ fn did_macro_veres_one_did() {
 fn did_macro_did_with_generic_param() {
     assert_eq!(
         did!("did:example:1234;service=agent"),
-        DidBuilder::new("example","1234")
-            .with_params(&[("service","agent")])
+        DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent")])
             .build()
     );
 }
@@ -79,8 +78,8 @@ fn did_macro_did_with_generic_param() {
 fn did_macro_did_with_method_specific_param() {
     assert_eq!(
         did!("did:example:1234;example:foo:bar=baz"),
-        DidBuilder::new("example","1234")
-            .with_params(&[("example:foo:bar","baz")])
+        DidBuilder::new("example", "1234")
+            .with_params(&[("example:foo:bar", "baz")])
             .build()
     );
 }
@@ -89,8 +88,8 @@ fn did_macro_did_with_method_specific_param() {
 fn did_macro_did_with_multiple_params() {
     assert_eq!(
         did!("did:example:1234;service=agent;example:foo:bar=baz"),
-        DidBuilder::new("example","1234")
-            .with_params(&[("service","agent"),("example:foo:bar","baz")])
+        DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent"), ("example:foo:bar", "baz")])
             .build()
     );
 }
@@ -99,8 +98,8 @@ fn did_macro_did_with_multiple_params() {
 fn did_macro_did_with_multiple_params_and_fragment() {
     assert_eq!(
         did!("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
-        DidBuilder::new("example","1234")
-            .with_params(&[("service","agent"),("example:foo:bar","baz")])
+        DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent"), ("example:foo:bar", "baz")])
             .with_fragment("keys-1")
             .build()
     );

@@ -1,4 +1,6 @@
-use did_common::did_doc::{DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType};
+use did_common::did_doc::{
+    DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType,
+};
 
 fn json_parse(input: &str) -> json::JsonValue {
     json::parse(input).unwrap()
@@ -94,15 +96,18 @@ fn parse_did_doc_with_ed25519_pubkey() {
         }
         "#
         )),
-        Ok(DidDocumentBuilder::new("did:example:21tDAKCERh95uGgKbJNHYp")
-            .with_pubkeys(
-                vec![
-                    PublicKeyBuilder::new("did:example:123456789abcdefghi#keys-1", PublicKeyType::Ed25519,"did:example:pqrstuvwxyz0987654321")
-                        .with_encoded_key(PublicKeyEncoded::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"))
-                        .build()
-                ]
-            )
-            .build()
+        Ok(
+            DidDocumentBuilder::new("did:example:21tDAKCERh95uGgKbJNHYp")
+                .with_pubkeys(vec![PublicKeyBuilder::new(
+                    "did:example:123456789abcdefghi#keys-1",
+                    PublicKeyType::Ed25519,
+                    "did:example:pqrstuvwxyz0987654321"
+                )
+                .with_encoded_key(PublicKeyEncoded::Base58(
+                    "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                ))
+                .build()])
+                .build()
         )
     );
 }

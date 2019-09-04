@@ -120,7 +120,7 @@ pub struct PublicKeyBuilder<'a> {
     id: &'a str,
     key_type: PublicKeyType,
     controller: &'a str,
-    encoded_key: PublicKeyEncoded<'a>
+    encoded_key: PublicKeyEncoded<'a>,
 }
 
 impl<'a> PublicKeyBuilder<'a> {
@@ -129,7 +129,7 @@ impl<'a> PublicKeyBuilder<'a> {
             id,
             key_type,
             controller,
-            encoded_key: PublicKeyEncoded::None
+            encoded_key: PublicKeyEncoded::None,
         }
     }
 
@@ -143,7 +143,7 @@ impl<'a> PublicKeyBuilder<'a> {
             id: self.id,
             key_type: self.key_type,
             controller: self.controller,
-            encoded_key: self.encoded_key
+            encoded_key: self.encoded_key,
         }
     }
 }
@@ -177,30 +177,28 @@ impl<'a> DidDocument<'a> {
 pub struct DidDocumentBuilder<'a> {
     context: &'a str,
     id: &'a str,
-    pub_keys: Vec<PublicKey<'a>>
+    pub_keys: Vec<PublicKey<'a>>,
 }
 
 impl<'a> DidDocumentBuilder<'a> {
-    pub fn new(id: &'a str) -> Self
-    {
+    pub fn new(id: &'a str) -> Self {
         DidDocumentBuilder {
             context: diddoc_parser::GENERIC_DID_CTX,
-            id: id,
+            id,
             pub_keys: vec![],
         }
     }
 
-    pub fn with_pubkeys(mut self, pub_keys: std::vec::Vec<PublicKey<'a>>) -> Self
-    {
+    pub fn with_pubkeys(mut self, pub_keys: std::vec::Vec<PublicKey<'a>>) -> Self {
         self.pub_keys = pub_keys;
         self
     }
 
     pub fn build(self) -> DidDocument<'a> {
         DidDocument {
-            context : self.context,
-            id : self.id,
-            pub_keys : self.pub_keys
+            context: self.context,
+            id: self.id,
+            pub_keys: self.pub_keys,
         }
     }
 }
@@ -208,10 +206,8 @@ impl<'a> DidDocumentBuilder<'a> {
 #[cfg(test)]
 mod tests {
     use super::{
-        DidDocument, DidDocumentBuilder,
-        PublicKey, PublicKeyBuilder,
-        PublicKeyEncoded, PublicKeyType,
-        KEY_FORMATS
+        DidDocument, DidDocumentBuilder, PublicKey, PublicKeyBuilder, PublicKeyEncoded,
+        PublicKeyType, KEY_FORMATS,
     };
 
     //TODO

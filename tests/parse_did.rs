@@ -12,7 +12,8 @@ fn parse_generic_did() {
 fn parse_generic_did_with_empty_method_id() {
     assert_eq!(
         Did::parse("did:example:"),
-        Ok(DidBuilder::new("example", "").build()));
+        Ok(DidBuilder::new("example", "").build())
+    );
 }
 
 #[test]
@@ -40,10 +41,7 @@ fn parse_btcr_did_with_key() {
 fn parse_ethr_did() {
     assert_eq!(
         Did::parse("did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"),
-        Ok(DidBuilder::new(
-            "ethr",
-            "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74"
-        ).build())
+        Ok(DidBuilder::new("ethr", "0xf3beac30c498d9e26865f34fcaa57dbb935b0d74").build())
     );
 }
 
@@ -59,10 +57,7 @@ fn parse_sovrin_did() {
 fn parse_erc725_did() {
     assert_eq!(
         Did::parse("did:erc725:ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"),
-        Ok(DidBuilder::new(
-            "erc725",
-            "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E"
-        ).build())
+        Ok(DidBuilder::new("erc725", "ropsten:2F2B37C890824242Cb9B0FE5614fA2221B79901E").build())
     )
 }
 
@@ -78,10 +73,9 @@ fn parse_veres_one_did() {
 fn parse_did_with_generic_param() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent"),
-        Ok(DidBuilder::new("example","1234")
-            .with_params(&[("service","agent")])
-            .build()
-        )
+        Ok(DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent")])
+            .build())
     );
 }
 
@@ -89,10 +83,9 @@ fn parse_did_with_generic_param() {
 fn parse_did_with_method_specific_param() {
     assert_eq!(
         Did::parse("did:example:1234;example:foo:bar=baz"),
-        Ok(DidBuilder::new("example","1234")
-            .with_params(&[("example:foo:bar","baz")])
-            .build()
-        )
+        Ok(DidBuilder::new("example", "1234")
+            .with_params(&[("example:foo:bar", "baz")])
+            .build())
     );
 }
 
@@ -100,10 +93,9 @@ fn parse_did_with_method_specific_param() {
 fn parse_did_with_multiple_params() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent;example:foo:bar=baz"),
-        Ok(DidBuilder::new("example","1234")
-            .with_params(&[("service","agent"),("example:foo:bar","baz")])
-            .build()
-        )
+        Ok(DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent"), ("example:foo:bar", "baz")])
+            .build())
     );
 }
 
@@ -111,10 +103,9 @@ fn parse_did_with_multiple_params() {
 fn parse_did_with_multiple_params_and_fragment() {
     assert_eq!(
         Did::parse("did:example:1234;service=agent;example:foo:bar=baz#keys-1"),
-        Ok(DidBuilder::new("example","1234")
-            .with_params(&[("service","agent"),("example:foo:bar","baz")])
+        Ok(DidBuilder::new("example", "1234")
+            .with_params(&[("service", "agent"), ("example:foo:bar", "baz")])
             .with_fragment("keys-1")
-            .build()
-        )
+            .build())
     );
 }
