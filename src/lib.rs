@@ -1,5 +1,6 @@
 // #![no_main]
 // #![no_std]
+#![warn(clippy::all)]
 
 extern crate json;
 extern crate nom;

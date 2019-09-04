@@ -1,4 +1,4 @@
-use crate::did::{Did, DidBuilder};
+use crate::did::{Did, DidBuilder, ParamOptionTuple};
 
 use nom::{
     bytes::complete::tag,
@@ -123,7 +123,7 @@ fn method_specific_id<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a
 
 fn generic_params<'a, E: ParseError<&'a str>>(
     input: &'a str,
-) -> IResult<&'a str, Option<Vec<(&'a str, Option<&'a str>)>>, E> {
+) -> IResult<&'a str, Option<Vec<ParamOptionTuple>>, E> {
     opt(preceded(
         tag(SEMICOLON_SEP),
         separated_list(

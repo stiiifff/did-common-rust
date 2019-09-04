@@ -17,7 +17,7 @@ const KEYID_PROP: &str = "id";
 const KEYTYPE_PROP: &str = "type";
 const KEYCTRL_PROP: &str = "controller";
 
-fn parse_did_context<'a>(json: &'a JsonValue) -> Result<&'a str, &'a str> {
+fn parse_did_context(json: &JsonValue) -> Result<&str, &str> {
     match json[CONTEXT_PROP].as_str() {
         Some(GENERIC_DID_CTX) => Ok(GENERIC_DID_CTX),
         Some(_) => Err("invalid DID context"),
@@ -25,12 +25,15 @@ fn parse_did_context<'a>(json: &'a JsonValue) -> Result<&'a str, &'a str> {
     }
 }
 
-fn parse_did_subject<'a>(json: &'a JsonValue) -> Result<&'a str, &'a str> {
+fn parse_did_subject(json: &JsonValue) -> Result<&str, &str> {
     match json[SUBJECT_PROP].as_str() {
-        Some(sub) => match Did::is_valid(sub) {
-            true => Ok(sub),
-            false => Err("invalid DID subject"),
-        },
+        Some(sub) => {
+            if Did::is_valid(sub) {
+                Ok(sub)
+            } else {
+                Err("invalid DID subject")
+            }
+        }
         None => Err("missing DID subject"),
     }
 }
@@ -63,17 +66,20 @@ fn parse_did_pubkey_list<'a>(json: &'a JsonValue) -> Result<Vec<PublicKey>, &'a 
     Ok(keys)
 }
 
-fn parse_did_pubkey_id<'a>(key: &'a JsonValue) -> Result<&'a str, &'a str> {
+fn parse_did_pubkey_id(key: &JsonValue) -> Result<&str, &str> {
     match key[KEYID_PROP].as_str() {
-        Some(id) => match Did::is_valid(&id) {
-            true => Ok(id),
-            false => Err("invalid DID public key id"),
-        },
+        Some(id) => {
+            if Did::is_valid(&id) {
+                Ok(id)
+            } else {
+                Err("invalid DID public key id")
+            }
+        }
         None => Err("missing DID public key id"),
     }
 }
 
-fn parse_did_pubkey_type<'a>(key: &'a JsonValue) -> Result<PublicKeyType, &'a str> {
+fn parse_did_pubkey_type(key: &JsonValue) -> Result<PublicKeyType, &str> {
     match key[KEYTYPE_PROP].as_str() {
         Some(r#type) => match PublicKeyType::from_str(&r#type) {
             Ok(key_type) => Ok(key_type),
@@ -83,14 +89,14 @@ fn parse_did_pubkey_type<'a>(key: &'a JsonValue) -> Result<PublicKeyType, &'a st
     }
 }
 
-fn parse_did_pubkey_ctrl<'a>(key: &'a JsonValue) -> Result<&'a str, &'a str> {
+fn parse_did_pubkey_ctrl(key: &JsonValue) -> Result<&str, &str> {
     match key[KEYCTRL_PROP].as_str() {
         Some(ctrl) => Ok(ctrl),
         None => Err("missing DID public key controller"),
     }
 }
 
-fn parse_did_pubkey_format<'a>(key: &'a JsonValue) -> Result<&'a str, &'a str> {
+fn parse_did_pubkey_format(key: &JsonValue) -> Result<&str, &str> {
     match KEY_FORMATS.iter().find(|f| key.has_key(f)) {
         Some(&kf) => Ok(kf),
         None => Err("missing DID public key property"),
@@ -104,13 +110,13 @@ fn parse_did_pubkey_encoded<'a>(
     match key[key_format].as_str() {
         Some(key_enc) => match PublicKeyEncoded::from((key_format, key_enc)) {
             PublicKeyEncoded::Unsupported => Err("unknown DID public key format"),
-            supported @ _ => Ok(supported),
+            supported => Ok(supported),
         },
         None => Err("missing DID public key controller"),
     }
 }
 
-pub fn parse_did_doc<'a>(json: &'a JsonValue) -> Result<DidDocument<'a>, &'a str> {
+pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
     let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
     let sub = parse_did_subject(json)?;
     let keys = parse_did_pubkey_list(json)?;

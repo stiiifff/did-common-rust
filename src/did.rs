@@ -132,8 +132,8 @@ impl<'a> DidParam<'a> {
     }
 }
 
-type ParamTuple<'a> = (&'a str, &'a str);
-type ParamOptionTuple<'a> = (&'a str, Option<&'a str>);
+pub type ParamTuple<'a> = (&'a str, &'a str);
+pub type ParamOptionTuple<'a> = (&'a str, Option<&'a str>);
 
 impl<'a> From<ParamOptionTuple<'a>> for DidParam<'a> {
     fn from(param: ParamOptionTuple<'a>) -> Self {
