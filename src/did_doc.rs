@@ -168,13 +168,6 @@ impl<'a> DidDocument<'a> {
         &self.pub_keys[..]
     }
 
-    // pub fn parse(diddoc_json: &'a str) -> Result<Self, &'a str> {
-    //     match diddoc_parser::parse_did_doc(diddoc_json) {
-    //         Ok(did_doc) => Ok(did_doc),
-    //         Err(_) => Err("Failed to parse DID document."),
-    //     }
-    // }
-
     pub fn parse(json: &'a JsonValue) -> Result<Self, &'a str> {
         diddoc_parser::parse_did_doc(json)
     }
@@ -210,4 +203,16 @@ impl<'a> DidDocumentBuilder<'a> {
             pub_keys : self.pub_keys
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        DidDocument, DidDocumentBuilder,
+        PublicKey, PublicKeyBuilder,
+        PublicKeyEncoded, PublicKeyType,
+        KEY_FORMATS
+    };
+
+    //TODO
 }
