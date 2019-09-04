@@ -3,6 +3,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::diddoc_parser;
+use json::JsonValue;
 
 #[derive(Debug, PartialEq)]
 pub enum PublicKeyType {
@@ -44,14 +45,15 @@ impl Error for ParsePublicKeyTypeError {
 //TODO: have a look at the did-common-typescript how they call this thing
 // Maybe PublicKey(Formatted)Value ?
 #[derive(Debug, PartialEq)]
-pub enum PublicKeyEncoded {
-    Pem(String),
-    Jwk(String),
-    Hex(String),
-    Base64(String),
-    Base58(String),
-    Multibase(String),
-    EthrAddress(String),
+pub enum PublicKeyEncoded<'a> {
+    None,
+    Pem(&'a str),
+    Jwk(&'a str),
+    Hex(&'a str),
+    Base64(&'a str),
+    Base58(&'a str),
+    Multibase(&'a str),
+    EthrAddress(&'a str),
     Unsupported,
 }
 
@@ -72,8 +74,8 @@ pub const KEY_FORMATS: [&str; 7] = [
     KEYETH_PROP,
 ];
 
-impl From<(&str, String)> for PublicKeyEncoded {
-    fn from(s: (&str, String)) -> Self {
+impl<'a> From<(&'a str, &'a str)> for PublicKeyEncoded<'a> {
+    fn from(s: (&'a str, &'a str)) -> Self {
         match s.0 {
             KEYPEM_PROP => PublicKeyEncoded::Pem(s.1),
             KEYJWK_PROP => PublicKeyEncoded::Jwk(s.1),
@@ -88,47 +90,124 @@ impl From<(&str, String)> for PublicKeyEncoded {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct PublicKey {
-    pub id: String,
-    pub r#type: PublicKeyType,
-    pub controller: String,
-    pub pub_key: PublicKeyEncoded,
+pub struct PublicKey<'a> {
+    id: &'a str,
+    key_type: PublicKeyType,
+    controller: &'a str,
+    encoded_key: PublicKeyEncoded<'a>,
+}
+
+impl<'a> PublicKey<'a> {
+    pub fn id(&self) -> &'a str {
+        self.id
+    }
+
+    pub fn key_type(&self) -> &PublicKeyType {
+        &self.key_type
+    }
+
+    pub fn controller(&self) -> &'a str {
+        self.controller
+    }
+
+    pub fn encoded_key(&self) -> &PublicKeyEncoded {
+        &self.encoded_key
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PublicKeyBuilder<'a> {
+    id: &'a str,
+    key_type: PublicKeyType,
+    controller: &'a str,
+    encoded_key: PublicKeyEncoded<'a>
+}
+
+impl<'a> PublicKeyBuilder<'a> {
+    pub fn new(id: &'a str, key_type: PublicKeyType, controller: &'a str) -> Self {
+        PublicKeyBuilder {
+            id,
+            key_type,
+            controller,
+            encoded_key: PublicKeyEncoded::None
+        }
+    }
+
+    pub fn with_encoded_key(mut self, encoded_key: PublicKeyEncoded<'a>) -> Self {
+        self.encoded_key = encoded_key;
+        self
+    }
+
+    pub fn build(self) -> PublicKey<'a> {
+        PublicKey {
+            id: self.id,
+            key_type: self.key_type,
+            controller: self.controller,
+            encoded_key: self.encoded_key
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct DidDocument<'a> {
-    pub context: &'a str,
-    pub id: String,
-    pub pub_keys: Vec<PublicKey>,
+    context: &'a str,
+    id: &'a str,
+    pub_keys: Vec<PublicKey<'a>>,
 }
 
 impl<'a> DidDocument<'a> {
-    pub fn new<S>(did: S) -> DidDocument<'a>
-    where
-        S: Into<String>,
+    pub fn context(&self) -> &'a str {
+        self.context
+    }
+
+    pub fn id(&self) -> &'a str {
+        self.id
+    }
+
+    pub fn pub_keys(&self) -> &[PublicKey<'a>] {
+        &self.pub_keys[..]
+    }
+
+    // pub fn parse(diddoc_json: &'a str) -> Result<Self, &'a str> {
+    //     match diddoc_parser::parse_did_doc(diddoc_json) {
+    //         Ok(did_doc) => Ok(did_doc),
+    //         Err(_) => Err("Failed to parse DID document."),
+    //     }
+    // }
+
+    pub fn parse(json: &'a JsonValue) -> Result<Self, &'a str> {
+        diddoc_parser::parse_did_doc(json)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DidDocumentBuilder<'a> {
+    context: &'a str,
+    id: &'a str,
+    pub_keys: Vec<PublicKey<'a>>
+}
+
+impl<'a> DidDocumentBuilder<'a> {
+    pub fn new(id: &'a str) -> Self
     {
-        DidDocument {
+        DidDocumentBuilder {
             context: diddoc_parser::GENERIC_DID_CTX,
-            id: did.into(),
+            id: id,
             pub_keys: vec![],
         }
     }
 
-    pub fn with_pubkeys<S>(did: S, pub_keys: std::vec::Vec<PublicKey>) -> DidDocument<'a>
-    where
-        S: Into<String>,
+    pub fn with_pubkeys(mut self, pub_keys: std::vec::Vec<PublicKey<'a>>) -> Self
     {
-        DidDocument {
-            context: diddoc_parser::GENERIC_DID_CTX,
-            id: did.into(),
-            pub_keys: pub_keys,
-        }
+        self.pub_keys = pub_keys;
+        self
     }
 
-    pub fn parse<S>(did_doc: S) -> Result<Self, &'a str>
-    where
-        S: Into<String>,
-    {
-        diddoc_parser::parse_did_doc(did_doc)
+    pub fn build(self) -> DidDocument<'a> {
+        DidDocument {
+            context : self.context,
+            id : self.id,
+            pub_keys : self.pub_keys
+        }
     }
 }

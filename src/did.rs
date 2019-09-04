@@ -31,7 +31,7 @@ impl<'a> Did<'a> {
         self.fragment
     }
 
-    pub fn is_valid(did_string: &str) -> bool {
+    pub fn is_valid(did_string: &'a str) -> bool {
         did_parser::validate_did(did_string)
     }
 
