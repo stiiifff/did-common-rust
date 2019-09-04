@@ -1,4 +1,4 @@
-use super::DID;
+use crate::did::{Did, DidBuilder, ParamOptionTuple};
 
 use nom::{
     bytes::complete::tag,
@@ -123,7 +123,7 @@ fn method_specific_id<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a
 
 fn generic_params<'a, E: ParseError<&'a str>>(
     input: &'a str,
-) -> IResult<&'a str, Option<Vec<(&'a str, Option<&'a str>)>>, E> {
+) -> IResult<&'a str, Option<Vec<ParamOptionTuple>>, E> {
     opt(preceded(
         tag(SEMICOLON_SEP),
         separated_list(
@@ -134,18 +134,10 @@ fn generic_params<'a, E: ParseError<&'a str>>(
 }
 
 fn fragment<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Option<&'a str>, E> {
-    opt(
-        preceded(
-            tag(FRAGMENT_SEP),
-            fragment_char0
-        )
-    )(input)
+    opt(preceded(tag(FRAGMENT_SEP), fragment_char0))(input)
 }
 
-pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
-    //TODO: refactor this with method chaining (as in validate_did)
-    // and a builder for the DID struct (capture DID instance in
-    // and_then closures, and call builder methods)
+pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, Did<'a>> {
     let (input, _) = did_scheme(input)?;
     let (input, method_name) = method_name(input)?;
     let (input, method_id) = method_specific_id(input)?;
@@ -153,16 +145,15 @@ pub fn parse_did<'a>(input: &'a str) -> IResult<&'a str, DID<'a>> {
     let (_empty, fragment) = fragment(input)?;
     assert_eq!(_empty, String::new());
 
-    let mut did = match params {
-        Some(params) => DID::with_params(method_name, method_id, params),
-        None => DID::new(method_name, method_id),
-    };
-
-    if let Some(_fragment) = fragment {
-        did.fragment = fragment;
+    let mut did = DidBuilder::new(method_name, method_id);
+    if let Some(params) = params {
+        did = did.with_params(params);
+    }
+    if let Some(fragment) = fragment {
+        did = did.with_fragment(fragment);
     }
 
-    Ok((input, did))
+    Ok((input, did.build()))
 }
 
 pub fn validate_did(input: &str) -> bool {
@@ -171,5 +162,6 @@ pub fn validate_did(input: &str) -> bool {
         .and_then(|(input, _)| method_specific_id(input))
         .and_then(|(input, _)| generic_params(input))
         .and_then(|(input, _)| fragment(input))
-        .map(|_| true).unwrap_or(false)
+        .map(|_| true)
+        .unwrap_or(false)
 }
