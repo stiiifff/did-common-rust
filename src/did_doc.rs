@@ -5,15 +5,13 @@ use std::str::FromStr;
 use crate::diddoc_parser;
 use json::JsonValue;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PublicKeyType {
     Rsa,
     Ed25519,
     EcdsaSecp256k1,
 }
 
-//TODO: implement PublicKeyTypeError see https://doc.rust-lang.org/src/std/net/parser.rs.html#390
-//TODO: write tests for PublicKeyType parsing
 impl FromStr for PublicKeyType {
     type Err = ParsePublicKeyTypeError;
 
@@ -42,9 +40,7 @@ impl Error for ParsePublicKeyTypeError {
     }
 }
 
-//TODO: have a look at the did-common-typescript how they call this thing
-// Maybe PublicKey(Formatted)Value ?
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PublicKeyEncoded<'a> {
     None,
     Pem(&'a str),
@@ -89,7 +85,7 @@ impl<'a> From<(&'a str, &'a str)> for PublicKeyEncoded<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PublicKey<'a> {
     id: &'a str,
     key_type: PublicKeyType,
@@ -205,10 +201,304 @@ impl<'a> DidDocumentBuilder<'a> {
 
 #[cfg(test)]
 mod tests {
+    use super::diddoc_parser::GENERIC_DID_CTX;
     use super::{
-        DidDocument, DidDocumentBuilder, PublicKey, PublicKeyBuilder, PublicKeyEncoded,
-        PublicKeyType, KEY_FORMATS,
+        DidDocument, DidDocumentBuilder, ParsePublicKeyTypeError, PublicKey, PublicKeyBuilder,
+        PublicKeyEncoded, PublicKeyType,
     };
+    use std::str::FromStr;
 
-    //TODO
+    const TEST_ENCODED_KEY: &str = "0x1234567890";
+
+    #[test]
+    fn public_key_type_fromstr_trait_for_rsa() {
+        assert_eq!(
+            PublicKeyType::from_str("RsaVerificationKey2018"),
+            Ok(PublicKeyType::Rsa)
+        );
+    }
+
+    #[test]
+    fn public_key_type_fromstr_trait_for_ed25519() {
+        assert_eq!(
+            PublicKeyType::from_str("Ed25519VerificationKey2018"),
+            Ok(PublicKeyType::Ed25519)
+        );
+    }
+
+    #[test]
+    fn public_key_type_fromstr_trait_for_ecdsasecp256k1() {
+        assert_eq!(
+            PublicKeyType::from_str("Secp256k1VerificationKey2018"),
+            Ok(PublicKeyType::EcdsaSecp256k1)
+        );
+    }
+
+    #[test]
+    fn public_key_type_fromstr_trait_for_invalid_case() {
+        assert_eq!(
+            PublicKeyType::from_str("rsaverificationkey2018"),
+            Err(ParsePublicKeyTypeError(()))
+        );
+        assert_eq!(
+            PublicKeyType::from_str("ed25519verificationkey2018"),
+            Err(ParsePublicKeyTypeError(()))
+        );
+        assert_eq!(
+            PublicKeyType::from_str("secp256k1verificationkey2018"),
+            Err(ParsePublicKeyTypeError(()))
+        );
+    }
+
+    #[test]
+    fn public_key_type_fromstr_trait_for_unsupported() {
+        assert_eq!(
+            PublicKeyType::from_str("azertyuiop"),
+            Err(ParsePublicKeyTypeError(()))
+        );
+    }
+
+    #[test]
+    fn public_key_type_error_display_trait() {
+        assert_eq!(
+            format!("{}", ParsePublicKeyTypeError(())),
+            "invalid DID public key type"
+        );
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_pem() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYPEM_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Pem(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_jwk() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYJWK_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Jwk(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_hex() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYHEX_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Hex(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_base64() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYB64_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Base64(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_base58() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYB58_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Base58(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_multibase() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYMUL_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Multibase(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_ethraddress() {
+        assert_eq!(
+            PublicKeyEncoded::from((super::KEYETH_PROP, TEST_ENCODED_KEY)),
+            PublicKeyEncoded::EthrAddress(TEST_ENCODED_KEY)
+        )
+    }
+
+    #[test]
+    fn public_key_encoded_from_trait_for_unsupported() {
+        assert_eq!(
+            PublicKeyEncoded::from(("azertyuiop", TEST_ENCODED_KEY)),
+            PublicKeyEncoded::Unsupported
+        )
+    }
+
+    #[test]
+    fn public_key_property_accessors() {
+        let pubkey = PublicKey {
+            id: "did:example:123456789abcdefghi#keys-1",
+            key_type: PublicKeyType::Ed25519,
+            controller: "did:example:123456789abcdefghi",
+            encoded_key: PublicKeyEncoded::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"),
+        };
+        assert_eq!(pubkey.id(), "did:example:123456789abcdefghi#keys-1");
+        assert_eq!(pubkey.key_type(), &PublicKeyType::Ed25519);
+        assert_eq!(pubkey.controller(), "did:example:123456789abcdefghi");
+        assert_eq!(
+            pubkey.encoded_key(),
+            &PublicKeyEncoded::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")
+        );
+    }
+
+    #[test]
+    fn public_key_builder_for_rsa_key() {
+        assert_eq!(
+            PublicKeyBuilder::new(
+                "did:example:123456789abcdefghi#keys-1",
+                PublicKeyType::Rsa,
+                "did:example:123456789abcdefghi"
+            )
+            .with_encoded_key(PublicKeyEncoded::Pem(
+                "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+            ))
+            .build(),
+            PublicKey {
+                id: "did:example:123456789abcdefghi#keys-1",
+                key_type: PublicKeyType::Rsa,
+                controller: "did:example:123456789abcdefghi",
+                encoded_key: PublicKeyEncoded::Pem(
+                    "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+                ),
+            }
+        )
+    }
+
+    #[test]
+    fn public_key_builder_for_ed25519_key() {
+        assert_eq!(
+            PublicKeyBuilder::new(
+                "did:example:123456789abcdefghi#keys-2",
+                PublicKeyType::Ed25519,
+                "did:example:pqrstuvwxyz0987654321"
+            )
+            .with_encoded_key(PublicKeyEncoded::Base58(
+                "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+            ))
+            .build(),
+            PublicKey {
+                id: "did:example:123456789abcdefghi#keys-2",
+                key_type: PublicKeyType::Ed25519,
+                controller: "did:example:pqrstuvwxyz0987654321",
+                encoded_key: PublicKeyEncoded::Base58(
+                    "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                ),
+            }
+        )
+    }
+
+    #[test]
+    fn public_key_builder_for_edcsasecp256k1_key() {
+        assert_eq!(
+            PublicKeyBuilder::new(
+                "did:example:123456789abcdefghi#keys-3",
+                PublicKeyType::EcdsaSecp256k1,
+                "did:example:123456789abcdefghi"
+            )
+            .with_encoded_key(PublicKeyEncoded::Hex(
+                "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+            ))
+            .build(),
+            PublicKey {
+                id: "did:example:123456789abcdefghi#keys-3",
+                key_type: PublicKeyType::EcdsaSecp256k1,
+                controller: "did:example:123456789abcdefghi",
+                encoded_key: PublicKeyEncoded::Hex(
+                    "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+                ),
+            }
+        )
+    }
+
+    #[test]
+    fn did_document_property_accessors() {
+        let pubkey = PublicKey {
+            id: "did:example:123456789abcdefghi#keys-1",
+            key_type: PublicKeyType::Ed25519,
+            controller: "did:example:123456789abcdefghi",
+            encoded_key: PublicKeyEncoded::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"),
+        };
+
+        let did_doc = DidDocument {
+            context: "https://www.w3.org/2019/did/v1",
+            id: "did:example:123456789abcdefghi",
+            pub_keys: vec![pubkey.clone()],
+        };
+        assert_eq!(did_doc.context(), "https://www.w3.org/2019/did/v1");
+        assert_eq!(did_doc.id(), "did:example:123456789abcdefghi");
+        assert_eq!(did_doc.pub_keys(), &[pubkey]);
+    }
+
+    #[test]
+    fn did_document_builder_with_pub_keys() {
+        assert_eq!(
+            DidDocumentBuilder::new("did:example:123456789abcdefghi")
+                .with_pubkeys(vec![
+                    PublicKeyBuilder::new(
+                        "did:example:123456789abcdefghi#keys-1",
+                        PublicKeyType::Rsa,
+                        "did:example:123456789abcdefghi"
+                    )
+                    .with_encoded_key(PublicKeyEncoded::Pem(
+                        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+                    ))
+                    .build(),
+                    PublicKeyBuilder::new(
+                        "did:example:123456789abcdefghi#keys-2",
+                        PublicKeyType::Ed25519,
+                        "did:example:pqrstuvwxyz0987654321"
+                    )
+                    .with_encoded_key(PublicKeyEncoded::Base58(
+                        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                    ))
+                    .build(),
+                    PublicKeyBuilder::new(
+                        "did:example:123456789abcdefghi#keys-3",
+                        PublicKeyType::EcdsaSecp256k1,
+                        "did:example:123456789abcdefghi"
+                    )
+                    .with_encoded_key(PublicKeyEncoded::Hex(
+                        "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+                    ))
+                    .build()
+                ])
+                .build(),
+            DidDocument {
+                context: GENERIC_DID_CTX,
+                id: "did:example:123456789abcdefghi",
+                pub_keys: vec![
+                    PublicKey {
+                        id: "did:example:123456789abcdefghi#keys-1",
+                        key_type: PublicKeyType::Rsa,
+                        controller: "did:example:123456789abcdefghi",
+                        encoded_key: PublicKeyEncoded::Pem(
+                            "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+                        ),
+                    },
+                    PublicKey {
+                        id: "did:example:123456789abcdefghi#keys-2",
+                        key_type: PublicKeyType::Ed25519,
+                        controller: "did:example:pqrstuvwxyz0987654321",
+                        encoded_key: PublicKeyEncoded::Base58(
+                            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                        ),
+                    },
+                    PublicKey {
+                        id: "did:example:123456789abcdefghi#keys-3",
+                        key_type: PublicKeyType::EcdsaSecp256k1,
+                        controller: "did:example:123456789abcdefghi",
+                        encoded_key: PublicKeyEncoded::Hex(
+                            "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+                        ),
+                    }
+                ]
+            }
+        )
+    }
 }

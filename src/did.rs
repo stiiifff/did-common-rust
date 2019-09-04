@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn did_impl_display_trait() {
+    fn did_display_trait() {
         assert_eq!(
             format!(
                 "{}",
@@ -366,16 +366,6 @@ mod tests {
     }
 
     #[test]
-    fn did_param_property_accessors() {
-        assert_eq!(DidParam::new("service", None).name(), "service");
-        assert_eq!(DidParam::new("service", None).value(), None);
-        assert_eq!(
-            DidParam::new("service", Some("agent")).value(),
-            Some("agent")
-        );
-    }
-
-    #[test]
     fn did_param_ctor_with_value() {
         assert_eq!(
             DidParam::new("service", Some("agent")),
@@ -384,6 +374,16 @@ mod tests {
                 value: Some("agent")
             }
         )
+    }
+
+    #[test]
+    fn did_param_property_accessors() {
+        assert_eq!(DidParam::new("service", None).name(), "service");
+        assert_eq!(DidParam::new("service", None).value(), None);
+        assert_eq!(
+            DidParam::new("service", Some("agent")).value(),
+            Some("agent")
+        );
     }
 
     #[test]
@@ -420,12 +420,9 @@ mod tests {
     }
 
     #[test]
-    fn did_param_display_trait_without_value() {
+    fn did_param_display_trait() {
         assert_eq!(format!("{}", DidParam::new("service", None)), "service");
-    }
 
-    #[test]
-    fn did_param_display_trait_with_value() {
         assert_eq!(
             format!("{}", DidParam::new("service", Some("agent"))),
             "service=agent"
