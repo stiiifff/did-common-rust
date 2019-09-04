@@ -11,3 +11,5 @@ mod diddoc_parser;
 pub mod did;
 pub mod did_doc;
 pub mod macros;
+
+pub use json::parse as json_parse;
