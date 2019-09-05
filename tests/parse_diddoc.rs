@@ -1,87 +1,87 @@
 use did_common::did_doc::{
-    DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType,
+	DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType,
 };
 
 fn json_parse(input: &str) -> json::JsonValue {
-    did_common::json_parse(input).unwrap()
+	did_common::json_parse(input).unwrap()
 }
 
 #[test]
 fn parse_did_doc_with_missing_context() {
-    assert_eq!(
-        DidDocument::parse(&json_parse(
-            r#"
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
         {
             "id": "did:example:21tDAKCERh95uGgKbJNHYp"
         }
         "#
-        )),
-        Err("missing DID context")
-    );
+		)),
+		Err("missing DID context")
+	);
 }
 
 #[test]
 fn parse_did_doc_with_invalid_context() {
-    assert_eq!(
-        DidDocument::parse(&json_parse(
-            r#"
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
         {
             "@context": "https://w3id.org/security/v1",
             "id": "did:example:21tDAKCERh95uGgKbJNHYp"
         }
         "#
-        )),
-        Err("invalid DID context")
-    );
+		)),
+		Err("invalid DID context")
+	);
 }
 
 #[test]
 fn parse_did_doc_with_missing_subject() {
-    assert_eq!(
-        DidDocument::parse(&json_parse(
-            r#"
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
         {
             "@context": "https://www.w3.org/2019/did/v1"
         }
         "#
-        )),
-        Err("missing DID subject")
-    );
+		)),
+		Err("missing DID subject")
+	);
 }
 
 #[test]
 fn parse_did_doc_with_invalid_subject() {
-    assert_eq!(
-        DidDocument::parse(&json_parse(
-            r#"
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
         {
             "@context": "https://www.w3.org/2019/did/v1",
             "id": "foobar"
         }
         "#
-        )),
-        Err("invalid DID subject")
-    );
+		)),
+		Err("invalid DID subject")
+	);
 }
 
 #[test]
 fn parse_minimal_did_doc() {
-    assert_eq!(
-        DidDocument::parse(&json_parse(
-            r#"
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
         {
             "@context": "https://www.w3.org/2019/did/v1",
             "id": "did:example:21tDAKCERh95uGgKbJNHYp"
         }
         "#
-        )),
-        Ok(DidDocumentBuilder::new("did:example:21tDAKCERh95uGgKbJNHYp").build())
-    );
+		)),
+		Ok(DidDocumentBuilder::new("did:example:21tDAKCERh95uGgKbJNHYp").build())
+	);
 }
 
 #[test]
 fn parse_did_doc_with_pub_keys() {
-    assert_eq!(
+	assert_eq!(
         DidDocument::parse(&json_parse(
             r#"
         {
