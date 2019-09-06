@@ -13,6 +13,7 @@ pub const GENERIC_DID_CTX: &str = "https://www.w3.org/2019/did/v1";
 const CONTEXT_PROP: &str = "@context";
 const SUBJECT_PROP: &str = "id";
 const CREATED_PROP: &str = "created";
+const UPDATED_PROP: &str = "updated";
 const PUBKEYS_PROP: &str = "publicKey";
 
 const KEYID_PROP: &str = "id";
@@ -58,6 +59,14 @@ fn parse_did_created(json: &JsonValue) -> Result<Option<&str>, &str> {
 	match json[CREATED_PROP].as_str() {
 		Some(created) if DATETIME_REGEX.is_match(created) => Ok(Some(created)),
 		Some(_) => Err("invalid created timestamp"),
+		None => Ok(None),
+	}
+}
+
+fn parse_did_updated(json: &JsonValue) -> Result<Option<&str>, &str> {
+	match json[UPDATED_PROP].as_str() {
+		Some(created) if DATETIME_REGEX.is_match(created) => Ok(Some(created)),
+		Some(_) => Err("invalid updated timestamp"),
 		None => Ok(None),
 	}
 }
@@ -144,11 +153,15 @@ pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
 	let sub = parse_did_subject(json)?;
 	let created = parse_did_created(json)?;
+	let updated = parse_did_updated(json)?;
 	let keys = parse_did_pubkey_list(json)?;
 
 	let mut did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys);
 	if let Some(created) = created {
 		did_doc = did_doc.created_on(created);
+	}
+	if let Some(updated) = updated {
+		did_doc = did_doc.updated_on(updated);
 	}
 	Ok(did_doc.build())
 }
