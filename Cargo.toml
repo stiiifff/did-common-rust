@@ -1,5 +1,5 @@
 [package]
-name = "did-common"
+name = "did_common"
 version = "0.1.0"
 authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
@@ -17,6 +17,7 @@ categories = ["parser-implementations"]
 keywords = ["decentralized-id","did"]
 
 [dependencies]
+json = "^0.11"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 nom = { version="^5", default-features = true }
