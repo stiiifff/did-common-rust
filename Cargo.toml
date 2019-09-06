@@ -18,6 +18,8 @@ keywords = ["decentralized-id","did"]
 
 [dependencies]
 json = "^0.11"
+lazy_static = "^1"
+regex = "^1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 nom = { version="^5", default-features = true }

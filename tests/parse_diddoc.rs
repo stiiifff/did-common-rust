@@ -80,6 +80,42 @@ fn parse_minimal_did_doc() {
 }
 
 #[test]
+fn parse_did_doc_with_invalid_created() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:21tDAKCERh95uGgKbJNHYp",
+			"created": "2002-10-32T17:00:00"
+        }
+        "#
+		)),
+		Err("invalid created timestamp")
+	);
+}
+
+#[test]
+fn parse_did_doc_with_created() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:21tDAKCERh95uGgKbJNHYp",
+			"created": "2002-10-10T17:00:00Z"
+        }
+        "#
+		)),
+		Ok(
+			DidDocumentBuilder::new("did:example:21tDAKCERh95uGgKbJNHYp")
+				.created_on("2002-10-10T17:00:00Z")
+				.build()
+		)
+	);
+}
+
+#[test]
 fn parse_did_doc_with_pub_keys() {
 	assert_eq!(
         DidDocument::parse(&json_parse(
