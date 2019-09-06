@@ -15,6 +15,7 @@ const SUBJECT_PROP: &str = "id";
 const CREATED_PROP: &str = "created";
 const UPDATED_PROP: &str = "updated";
 const PUBKEYS_PROP: &str = "publicKey";
+const AUTHN_PROP: &str = "authentication";
 
 const KEYID_PROP: &str = "id";
 const KEYTYPE_PROP: &str = "type";
@@ -149,12 +150,41 @@ fn parse_did_pubkey_encoded<'a>(
 	}
 }
 
+fn parse_did_auth_list<'a>(json: &'a JsonValue) -> Result<Vec<()>, &'a str> {
+	let mut verif_methods: Vec<()> = vec![];
+	// for i in 0..json[PUBKEYS_PROP].len() {
+	// 	let key = &json[PUBKEYS_PROP][i];
+	// 	if key.is_null() {
+	// 		break;
+	// 	}
+
+	// 	let key_id = parse_did_pubkey_id(key)?;
+	// 	if keys.iter().any(|k| k.id() == key_id) {
+	// 		// return Err(format!("duplicate DID public key id '{}'", key_id).as_str());
+	// 		return Err("duplicate DID public key id");
+	// 	}
+
+	// 	let key_type = parse_did_pubkey_type(key)?;
+	// 	let key_ctrl = parse_did_pubkey_ctrl(key)?;
+	// 	let key_format = parse_did_pubkey_format(key)?;
+	// 	let key_encoded = parse_did_pubkey_encoded(key, key_format)?;
+
+	// 	keys.push(
+	// 		PublicKeyBuilder::new(key_id, key_type, key_ctrl)
+	// 			.with_encoded_key(key_encoded)
+	// 			.build(),
+	// 	);
+	// }
+	Ok(verif_methods)
+}
+
 pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
 	let sub = parse_did_subject(json)?;
 	let created = parse_did_created(json)?;
 	let updated = parse_did_updated(json)?;
 	let keys = parse_did_pubkey_list(json)?;
+	let auth = parse_did_auth_list(json)?;
 
 	let mut did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys);
 	if let Some(created) = created {

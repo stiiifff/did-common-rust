@@ -144,12 +144,19 @@ impl<'a> PublicKeyBuilder<'a> {
 	}
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum VerificationMethod<'a> {
+	Reference(&'a str),
+	Embedded(PublicKey<'a>),
+}
+
 #[derive(Debug, PartialEq)]
 pub struct DidDocument<'a> {
 	context: &'a str,
 	id: &'a str,
 	created: Option<&'a str>,
 	updated: Option<&'a str>,
+	authentication: Vec<VerificationMethod<'a>>,
 	pub_keys: Vec<PublicKey<'a>>,
 }
 
