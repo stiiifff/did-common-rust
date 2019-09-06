@@ -148,6 +148,7 @@ impl<'a> PublicKeyBuilder<'a> {
 pub struct DidDocument<'a> {
 	context: &'a str,
 	id: &'a str,
+	created: Option<&'a str>,
 	pub_keys: Vec<PublicKey<'a>>,
 }
 
@@ -158,6 +159,10 @@ impl<'a> DidDocument<'a> {
 
 	pub fn id(&self) -> &'a str {
 		self.id
+	}
+
+	pub fn created(&self) -> Option<&'a str> {
+		self.created
 	}
 
 	pub fn pub_keys(&self) -> &[PublicKey<'a>] {
@@ -173,6 +178,7 @@ impl<'a> DidDocument<'a> {
 pub struct DidDocumentBuilder<'a> {
 	context: &'a str,
 	id: &'a str,
+	created: Option<&'a str>,
 	pub_keys: Vec<PublicKey<'a>>,
 }
 
@@ -181,8 +187,14 @@ impl<'a> DidDocumentBuilder<'a> {
 		DidDocumentBuilder {
 			context: diddoc_parser::GENERIC_DID_CTX,
 			id,
+			created: None,
 			pub_keys: vec![],
 		}
+	}
+
+	pub fn created_on(mut self, created: &'a str) -> Self {
+		self.created = Some(created);
+		self
 	}
 
 	pub fn with_pubkeys(mut self, pub_keys: std::vec::Vec<PublicKey<'a>>) -> Self {
@@ -194,6 +206,7 @@ impl<'a> DidDocumentBuilder<'a> {
 		DidDocument {
 			context: self.context,
 			id: self.id,
+			created: self.created,
 			pub_keys: self.pub_keys,
 		}
 	}
@@ -428,10 +441,12 @@ mod tests {
 		let did_doc = DidDocument {
 			context: "https://www.w3.org/2019/did/v1",
 			id: "did:example:123456789abcdefghi",
+			created: Some("2002-10-10T17:00:00Z"),
 			pub_keys: vec![pubkey.clone()],
 		};
 		assert_eq!(did_doc.context(), "https://www.w3.org/2019/did/v1");
 		assert_eq!(did_doc.id(), "did:example:123456789abcdefghi");
+		assert_eq!(did_doc.created(), Some("2002-10-10T17:00:00Z"));
 		assert_eq!(did_doc.pub_keys(), &[pubkey]);
 	}
 
@@ -472,6 +487,7 @@ mod tests {
 			DidDocument {
 				context: GENERIC_DID_CTX,
 				id: "did:example:123456789abcdefghi",
+				created: None,
 				pub_keys: vec![
 					PublicKey {
 						id: "did:example:123456789abcdefghi#keys-1",
@@ -498,6 +514,21 @@ mod tests {
 						),
 					}
 				]
+			}
+		)
+	}
+
+	#[test]
+	fn did_document_builder_with_created() {
+		assert_eq!(
+			DidDocumentBuilder::new("did:example:123456789abcdefghi")
+				.created_on("2002-10-10T17:00:00Z")
+				.build(),
+			DidDocument {
+				context: GENERIC_DID_CTX,
+				id: "did:example:123456789abcdefghi",
+				created: Some("2002-10-10T17:00:00Z"),
+				pub_keys: vec![]
 			}
 		)
 	}

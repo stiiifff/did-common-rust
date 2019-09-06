@@ -6,16 +6,32 @@ use crate::{
 	},
 };
 use json::JsonValue;
+use regex::Regex;
 use std::str::FromStr;
 
 pub const GENERIC_DID_CTX: &str = "https://www.w3.org/2019/did/v1";
 const CONTEXT_PROP: &str = "@context";
 const SUBJECT_PROP: &str = "id";
+const CREATED_PROP: &str = "created";
 const PUBKEYS_PROP: &str = "publicKey";
 
 const KEYID_PROP: &str = "id";
 const KEYTYPE_PROP: &str = "type";
 const KEYCTRL_PROP: &str = "controller";
+
+lazy_static! {
+	static ref DATETIME_REGEX: Regex = Regex::new(
+		// See https://www.w3.org/TR/xmlschema11-2/#dateTime
+		r"(?x)
+		-?([1-9][0-9]{3,}|0[0-9]{3})
+		-(0[1-9]|1[0-2])
+		-(0[1-9]|[12][0-9]|3[01])
+		T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?|(24:00:00(\.0+)?))
+		Z
+    "
+	)
+	.unwrap();
+}
 
 fn parse_did_context(json: &JsonValue) -> Result<&str, &str> {
 	match json[CONTEXT_PROP].as_str() {
@@ -35,6 +51,14 @@ fn parse_did_subject(json: &JsonValue) -> Result<&str, &str> {
 			}
 		}
 		None => Err("missing DID subject"),
+	}
+}
+
+fn parse_did_created(json: &JsonValue) -> Result<Option<&str>, &str> {
+	match json[CREATED_PROP].as_str() {
+		Some(created) if DATETIME_REGEX.is_match(created) => Ok(Some(created)),
+		Some(_) => Err("invalid created timestamp"),
+		None => Ok(None),
 	}
 }
 
@@ -119,8 +143,12 @@ fn parse_did_pubkey_encoded<'a>(
 pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
 	let sub = parse_did_subject(json)?;
+	let created = parse_did_created(json)?;
 	let keys = parse_did_pubkey_list(json)?;
 
-	let did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys).build();
-	Ok(did_doc)
+	let mut did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys);
+	if let Some(created) = created {
+		did_doc = did_doc.created_on(created);
+	}
+	Ok(did_doc.build())
 }
