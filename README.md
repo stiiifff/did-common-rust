@@ -1,7 +1,7 @@
 did-common
 ==========
 
-[![Actions Status](https://github.com/stiiifff/did-common-rust/workflows/rust/badge.svg)](https://github.com/stiiifff/did-common-rust/actions)
+[![Actions Status](https://github.com/stiiifff/did-common-rust/workflows/Rust/badge.svg)](https://github.com/stiiifff/did-common-rust/actions)
 [![Build Status](https://app.codeship.com/projects/db6e3400-a583-0137-4b80-166c57de4e20/status?branch=master)](https://app.codeship.com/projects/360660)
 
 A rust library for parsing Decentralized Identifiers (DIDs) following
