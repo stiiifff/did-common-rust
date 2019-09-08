@@ -150,7 +150,7 @@ pub enum VerificationMethod<'a> {
 	Embedded(PublicKey<'a>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct DidDocument<'a> {
 	context: &'a str,
 	id: &'a str,
@@ -177,6 +177,10 @@ impl<'a> DidDocument<'a> {
 		self.updated
 	}
 
+	pub fn authentication(&self) -> &[VerificationMethod<'a>] {
+		&self.authentication[..]
+	}
+
 	pub fn pub_keys(&self) -> &[PublicKey<'a>] {
 		&self.pub_keys[..]
 	}
@@ -186,12 +190,13 @@ impl<'a> DidDocument<'a> {
 	}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct DidDocumentBuilder<'a> {
 	context: &'a str,
 	id: &'a str,
 	created: Option<&'a str>,
 	updated: Option<&'a str>,
+	authentication: Vec<VerificationMethod<'a>>,
 	pub_keys: Vec<PublicKey<'a>>,
 }
 
@@ -200,9 +205,7 @@ impl<'a> DidDocumentBuilder<'a> {
 		DidDocumentBuilder {
 			context: diddoc_parser::GENERIC_DID_CTX,
 			id,
-			created: None,
-			updated: None,
-			pub_keys: vec![],
+			..Default::default()
 		}
 	}
 
@@ -213,6 +216,14 @@ impl<'a> DidDocumentBuilder<'a> {
 
 	pub fn updated_on(mut self, updated: &'a str) -> Self {
 		self.updated = Some(updated);
+		self
+	}
+
+	pub fn with_authentication(
+		mut self,
+		authentication: std::vec::Vec<VerificationMethod<'a>>,
+	) -> Self {
+		self.authentication = authentication;
 		self
 	}
 
@@ -227,6 +238,7 @@ impl<'a> DidDocumentBuilder<'a> {
 			id: self.id,
 			created: self.created,
 			updated: self.updated,
+			authentication: self.authentication,
 			pub_keys: self.pub_keys,
 		}
 	}
@@ -237,7 +249,7 @@ mod tests {
 	use super::diddoc_parser::GENERIC_DID_CTX;
 	use super::{
 		DidDocument, DidDocumentBuilder, ParsePublicKeyTypeError, PublicKey, PublicKeyBuilder,
-		PublicKeyEncoded, PublicKeyType,
+		PublicKeyEncoded, PublicKeyType, VerificationMethod,
 	};
 	use std::str::FromStr;
 
@@ -458,17 +470,21 @@ mod tests {
 			encoded_key: PublicKeyEncoded::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"),
 		};
 
+		let verif_method = VerificationMethod::Embedded(pubkey.clone());
+
 		let did_doc = DidDocument {
 			context: "https://www.w3.org/2019/did/v1",
 			id: "did:example:123456789abcdefghi",
 			created: Some("2002-10-10T17:00:00Z"),
 			updated: Some("2002-10-10T17:00:00Z"),
+			authentication: vec![verif_method.clone()],
 			pub_keys: vec![pubkey.clone()],
 		};
 		assert_eq!(did_doc.context(), "https://www.w3.org/2019/did/v1");
 		assert_eq!(did_doc.id(), "did:example:123456789abcdefghi");
 		assert_eq!(did_doc.created(), Some("2002-10-10T17:00:00Z"));
 		assert_eq!(did_doc.created(), Some("2002-10-10T17:00:00Z"));
+		assert_eq!(did_doc.authentication(), &[verif_method]);
 		assert_eq!(did_doc.pub_keys(), &[pubkey]);
 	}
 
@@ -509,8 +525,6 @@ mod tests {
 			DidDocument {
 				context: GENERIC_DID_CTX,
 				id: "did:example:123456789abcdefghi",
-				created: None,
-				updated: None,
 				pub_keys: vec![
 					PublicKey {
 						id: "did:example:123456789abcdefghi#keys-1",
@@ -536,7 +550,76 @@ mod tests {
 							"02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
 						),
 					}
-				]
+				],
+				..Default::default()
+			}
+		)
+	}
+
+	#[test]
+	fn did_document_builder_with_auth_reference_verif_method() {
+		assert_eq!(
+			DidDocumentBuilder::new("did:example:123456789abcdefghi")
+				.with_authentication(vec![VerificationMethod::Reference(
+					"did:example:123456789abcdefghi#keys-1"
+				)])
+				.with_pubkeys(vec![PublicKeyBuilder::new(
+					"did:example:123456789abcdefghi#keys-1",
+					PublicKeyType::Rsa,
+					"did:example:123456789abcdefghi"
+				)
+				.with_encoded_key(PublicKeyEncoded::Pem(
+					"-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+				))
+				.build()])
+				.build(),
+			DidDocument {
+				context: GENERIC_DID_CTX,
+				id: "did:example:123456789abcdefghi",
+				authentication: vec![VerificationMethod::Reference(
+					"did:example:123456789abcdefghi#keys-1"
+				)],
+				pub_keys: vec![PublicKey {
+					id: "did:example:123456789abcdefghi#keys-1",
+					key_type: PublicKeyType::Rsa,
+					controller: "did:example:123456789abcdefghi",
+					encoded_key: PublicKeyEncoded::Pem(
+						"-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+					),
+				}],
+				..Default::default()
+			}
+		)
+	}
+
+	#[test]
+	fn did_document_builder_with_auth_embedded_verif_method() {
+		assert_eq!(
+			DidDocumentBuilder::new("did:example:123456789abcdefghi")
+				.with_authentication(vec![VerificationMethod::Embedded(
+					PublicKeyBuilder::new(
+						"did:example:123456789abcdefghi#keys-2",
+						PublicKeyType::Ed25519,
+						"did:example:123456789abcdefghi"
+					)
+					.with_encoded_key(PublicKeyEncoded::Base58(
+						"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+					))
+					.build(),
+				)])
+				.build(),
+			DidDocument {
+				context: GENERIC_DID_CTX,
+				id: "did:example:123456789abcdefghi",
+				authentication: vec![VerificationMethod::Embedded(PublicKey {
+					id: "did:example:123456789abcdefghi#keys-2",
+					key_type: PublicKeyType::Ed25519,
+					controller: "did:example:123456789abcdefghi",
+					encoded_key: PublicKeyEncoded::Base58(
+						"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+					),
+				})],
+				..Default::default()
 			}
 		)
 	}
@@ -551,8 +634,7 @@ mod tests {
 				context: GENERIC_DID_CTX,
 				id: "did:example:123456789abcdefghi",
 				created: Some("2002-10-10T17:00:00Z"),
-				updated: None,
-				pub_keys: vec![]
+				..Default::default()
 			}
 		)
 	}
@@ -566,9 +648,8 @@ mod tests {
 			DidDocument {
 				context: GENERIC_DID_CTX,
 				id: "did:example:123456789abcdefghi",
-				created: None,
 				updated: Some("2002-10-10T17:00:00Z"),
-				pub_keys: vec![]
+				..Default::default()
 			}
 		)
 	}
