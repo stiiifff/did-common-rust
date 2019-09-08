@@ -2,7 +2,7 @@ use crate::{
 	did::Did,
 	did_doc::{
 		DidDocument, DidDocumentBuilder, PublicKey, PublicKeyBuilder, PublicKeyEncoded,
-		PublicKeyType, KEY_FORMATS,
+		PublicKeyType, VerificationMethod, KEY_FORMATS,
 	},
 };
 use json::JsonValue;
@@ -15,6 +15,7 @@ const SUBJECT_PROP: &str = "id";
 const CREATED_PROP: &str = "created";
 const UPDATED_PROP: &str = "updated";
 const PUBKEYS_PROP: &str = "publicKey";
+const AUTHN_PROP: &str = "authentication";
 
 const KEYID_PROP: &str = "id";
 const KEYTYPE_PROP: &str = "type";
@@ -78,25 +79,29 @@ fn parse_did_pubkey_list<'a>(json: &'a JsonValue) -> Result<Vec<PublicKey>, &'a 
 		if key.is_null() {
 			break;
 		}
-
-		let key_id = parse_did_pubkey_id(key)?;
-		if keys.iter().any(|k| k.id() == key_id) {
-			// return Err(format!("duplicate DID public key id '{}'", key_id).as_str());
-			return Err("duplicate DID public key id");
-		}
-
-		let key_type = parse_did_pubkey_type(key)?;
-		let key_ctrl = parse_did_pubkey_ctrl(key)?;
-		let key_format = parse_did_pubkey_format(key)?;
-		let key_encoded = parse_did_pubkey_encoded(key, key_format)?;
-
-		keys.push(
-			PublicKeyBuilder::new(key_id, key_type, key_ctrl)
-				.with_encoded_key(key_encoded)
-				.build(),
-		);
+		let pubkey = parse_did_pubkey(key, &keys)?;
+		keys.push(pubkey);
 	}
 	Ok(keys)
+}
+
+fn parse_did_pubkey<'a>(key: &'a JsonValue, keys: &[PublicKey]) -> Result<PublicKey<'a>, &'a str> {
+	let key_id = parse_did_pubkey_id(key)?;
+	if keys.iter().any(|k| k.id() == key_id) {
+		// return Err(format!("duplicate DID public key id '{}'", key_id).as_str());
+		return Err("duplicate DID public key id");
+	}
+
+	let key_type = parse_did_pubkey_type(key)?;
+	let key_ctrl = parse_did_pubkey_ctrl(key)?;
+	let key_format = parse_did_pubkey_format(key)?;
+	let key_encoded = parse_did_pubkey_encoded(key, key_format)?;
+
+	let key = PublicKeyBuilder::new(key_id, key_type, key_ctrl)
+		.with_encoded_key(key_encoded)
+		.build();
+
+	Ok(key)
 }
 
 fn parse_did_pubkey_id(key: &JsonValue) -> Result<&str, &str> {
@@ -149,14 +154,62 @@ fn parse_did_pubkey_encoded<'a>(
 	}
 }
 
+fn parse_did_auth_list<'a>(
+	json: &'a JsonValue,
+	pub_keys: &[PublicKey],
+) -> Result<Vec<VerificationMethod<'a>>, &'a str> {
+	let mut verif_methods: Vec<VerificationMethod> = vec![];
+	for i in 0..json[AUTHN_PROP].len() {
+		let vm = &json[AUTHN_PROP][i];
+		if vm.is_null() {
+			break;
+		}
+
+		let verif_method = parse_auth_verif_method(vm, pub_keys)?;
+		verif_methods.push(verif_method);
+	}
+	Ok(verif_methods)
+}
+
+fn parse_auth_verif_method<'a>(
+	json: &'a JsonValue,
+	pub_keys: &[PublicKey],
+) -> Result<VerificationMethod<'a>, &'a str> {
+	if json.is_string() {
+		let did = match json.as_str() {
+			Some(did) if Did::is_valid(did) => Ok(did),
+			Some(_) => Err("invalid reference verification method"),
+			None => Err("invalid reference verification method"),
+		}?;
+
+		if !pub_keys.iter().any(|k| k.id() == did) {
+			return Err("unknown reference verification method");
+		}
+
+		Ok(VerificationMethod::Reference(did))
+	} else if json.is_object() {
+		let key = parse_did_pubkey(json, Vec::<PublicKey>::new().as_slice())?;
+
+		if pub_keys.iter().any(|k| k.id() == key.id()) {
+			return Err("duplicate public key id from embedded verification method");
+		}
+		Ok(VerificationMethod::Embedded(key))
+	} else {
+		Err("invalid embedded verification method")
+	}
+}
+
 pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
 	let sub = parse_did_subject(json)?;
 	let created = parse_did_created(json)?;
 	let updated = parse_did_updated(json)?;
 	let keys = parse_did_pubkey_list(json)?;
+	let auth = parse_did_auth_list(json, &keys[..])?;
 
-	let mut did_doc = DidDocumentBuilder::new(sub).with_pubkeys(keys);
+	let mut did_doc = DidDocumentBuilder::new(sub)
+		.with_authentication(auth)
+		.with_pubkeys(keys);
 	if let Some(created) = created {
 		did_doc = did_doc.created_on(created);
 	}

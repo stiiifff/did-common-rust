@@ -1,5 +1,6 @@
 use did_common::did_doc::{
 	DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType,
+	VerificationMethod,
 };
 
 fn json_parse(input: &str) -> json::JsonValue {
@@ -214,4 +215,123 @@ fn parse_did_doc_with_pub_keys() {
                 .build()
         )
     );
+}
+
+#[test]
+fn parse_did_doc_with_auth_reference_verif_method() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+            "authentication": [ "did:example:123456789abcdefghi#keys-1" ],
+			"publicKey": [
+                {
+                    "id": "did:example:123456789abcdefghi#keys-1",
+                    "type": "RsaVerificationKey2018",
+                    "controller": "did:example:123456789abcdefghi",
+                    "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+                }
+            ]
+        }
+        "#
+		)),
+		Ok(DidDocumentBuilder::new("did:example:123456789abcdefghi")
+			.with_authentication(vec![VerificationMethod::Reference(
+				"did:example:123456789abcdefghi#keys-1"
+			)])
+			.with_pubkeys(vec![PublicKeyBuilder::new(
+				"did:example:123456789abcdefghi#keys-1",
+				PublicKeyType::Rsa,
+				"did:example:123456789abcdefghi"
+			)
+			.with_encoded_key(PublicKeyEncoded::Pem(
+				"-----BEGIN PUBLIC KEY...END PUBLIC KEY-----\r\n"
+			))
+			.build()])
+			.build())
+	);
+}
+
+#[test]
+fn parse_did_doc_with_unknown_auth_reference() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+            "authentication": [ "did:example:123456789abcdefghi#keys-1" ]
+        }
+        "#
+		)),
+		Err("unknown reference verification method")
+	);
+}
+
+#[test]
+fn parse_did_doc_with_auth_embedded_verif_method() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+            "authentication": [
+                {
+                    "id": "did:example:123456789abcdefghi#keys-2",
+                    "type": "Ed25519VerificationKey2018",
+                    "controller": "did:example:123456789abcdefghi",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                }
+            ]
+        }
+        "#
+		)),
+		Ok(DidDocumentBuilder::new("did:example:123456789abcdefghi")
+			.with_authentication(vec![VerificationMethod::Embedded(
+				PublicKeyBuilder::new(
+					"did:example:123456789abcdefghi#keys-2",
+					PublicKeyType::Ed25519,
+					"did:example:123456789abcdefghi"
+				)
+				.with_encoded_key(PublicKeyEncoded::Base58(
+					"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+				))
+				.build(),
+			)])
+			.build())
+	);
+}
+
+#[test]
+fn parse_did_doc_with_duplicate_id_from_auth_embedded() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+            "authentication": [
+                {
+                    "id": "did:example:123456789abcdefghi#keys-2",
+                    "type": "Ed25519VerificationKey2018",
+                    "controller": "did:example:123456789abcdefghi",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                }
+            ],
+			"publicKey": [
+                {
+                    "id": "did:example:123456789abcdefghi#keys-2",
+                    "type": "Ed25519VerificationKey2018",
+                    "controller": "did:example:pqrstuvwxyz0987654321",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                }
+            ]
+        }
+        "#
+		)),
+		Err("duplicate public key id from embedded verification method")
+	);
 }

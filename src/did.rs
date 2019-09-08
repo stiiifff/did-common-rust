@@ -70,7 +70,7 @@ impl fmt::Display for Did<'_> {
 	}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct DidBuilder<'a> {
 	method_name: &'a str,
 	method_specific_id: &'a str,
@@ -83,8 +83,7 @@ impl<'a> DidBuilder<'a> {
 		DidBuilder {
 			method_name,
 			method_specific_id,
-			params: None,
-			fragment: None,
+			..Default::default()
 		}
 	}
 
