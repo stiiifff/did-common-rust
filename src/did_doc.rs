@@ -150,6 +150,41 @@ pub enum VerificationMethod<'a> {
 	Embedded(PublicKey<'a>),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum ServiceEndpoint<'a> {
+	Uri(&'a str),
+	Object(&'a str),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Service<'a> {
+	id: &'a str,
+	svc_type: &'a str,
+	endpoint: ServiceEndpoint<'a>,
+}
+
+impl<'a> Service<'a> {
+	pub fn new(id: &'a str, svc_type: &'a str, endpoint: ServiceEndpoint<'a>) -> Self {
+		Service {
+			id,
+			svc_type,
+			endpoint,
+		}
+	}
+
+	pub fn id(&self) -> &'a str {
+		self.id
+	}
+
+	pub fn svc_type(&self) -> &'a str {
+		self.svc_type
+	}
+
+	pub fn endpoint(&self) -> &ServiceEndpoint {
+		&self.endpoint
+	}
+}
+
 #[derive(Debug, Default, PartialEq)]
 pub struct DidDocument<'a> {
 	context: &'a str,
@@ -158,6 +193,7 @@ pub struct DidDocument<'a> {
 	updated: Option<&'a str>,
 	authentication: Vec<VerificationMethod<'a>>,
 	pub_keys: Vec<PublicKey<'a>>,
+	service: Vec<Service<'a>>,
 }
 
 impl<'a> DidDocument<'a> {
@@ -185,6 +221,10 @@ impl<'a> DidDocument<'a> {
 		&self.pub_keys[..]
 	}
 
+	pub fn service(&self) -> &[Service<'a>] {
+		&self.service[..]
+	}
+
 	pub fn parse(json: &'a JsonValue) -> Result<Self, &'a str> {
 		diddoc_parser::parse_did_doc(json)
 	}
@@ -198,6 +238,7 @@ pub struct DidDocumentBuilder<'a> {
 	updated: Option<&'a str>,
 	authentication: Vec<VerificationMethod<'a>>,
 	pub_keys: Vec<PublicKey<'a>>,
+	service: Vec<Service<'a>>,
 }
 
 impl<'a> DidDocumentBuilder<'a> {
@@ -227,8 +268,13 @@ impl<'a> DidDocumentBuilder<'a> {
 		self
 	}
 
-	pub fn with_pubkeys(mut self, pub_keys: std::vec::Vec<PublicKey<'a>>) -> Self {
+	pub fn with_pubkeys(mut self, pub_keys: Vec<PublicKey<'a>>) -> Self {
 		self.pub_keys = pub_keys;
+		self
+	}
+
+	pub fn with_services(mut self, services: Vec<Service<'a>>) -> Self {
+		self.service = services;
 		self
 	}
 
@@ -240,6 +286,7 @@ impl<'a> DidDocumentBuilder<'a> {
 			updated: self.updated,
 			authentication: self.authentication,
 			pub_keys: self.pub_keys,
+			service: self.service,
 		}
 	}
 }
@@ -249,7 +296,7 @@ mod tests {
 	use super::diddoc_parser::GENERIC_DID_CTX;
 	use super::{
 		DidDocument, DidDocumentBuilder, ParsePublicKeyTypeError, PublicKey, PublicKeyBuilder,
-		PublicKeyEncoded, PublicKeyType, VerificationMethod,
+		PublicKeyEncoded, PublicKeyType, Service, ServiceEndpoint, VerificationMethod,
 	};
 	use std::str::FromStr;
 
@@ -472,6 +519,12 @@ mod tests {
 
 		let verif_method = VerificationMethod::Embedded(pubkey.clone());
 
+		let service = Service {
+			id: "did:example:123456789abcdefghi#openid",
+			svc_type: "OpenIdConnectVersion1.0Service",
+			endpoint: ServiceEndpoint::Uri("https://openid.example.com/"),
+		};
+
 		let did_doc = DidDocument {
 			context: "https://www.w3.org/2019/did/v1",
 			id: "did:example:123456789abcdefghi",
@@ -479,6 +532,7 @@ mod tests {
 			updated: Some("2002-10-10T17:00:00Z"),
 			authentication: vec![verif_method.clone()],
 			pub_keys: vec![pubkey.clone()],
+			service: vec![service.clone()],
 		};
 		assert_eq!(did_doc.context(), "https://www.w3.org/2019/did/v1");
 		assert_eq!(did_doc.id(), "did:example:123456789abcdefghi");
@@ -486,6 +540,7 @@ mod tests {
 		assert_eq!(did_doc.created(), Some("2002-10-10T17:00:00Z"));
 		assert_eq!(did_doc.authentication(), &[verif_method]);
 		assert_eq!(did_doc.pub_keys(), &[pubkey]);
+		assert_eq!(did_doc.service(), &[service]);
 	}
 
 	#[test]
@@ -619,6 +674,29 @@ mod tests {
 						"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 					),
 				})],
+				..Default::default()
+			}
+		)
+	}
+
+	#[test]
+	fn did_document_builder_with_service_uri_endpoint() {
+		assert_eq!(
+			DidDocumentBuilder::new("did:example:123456789abcdefghi")
+				.with_services(vec![Service::new(
+					"did:example:123456789abcdefghi#openid",
+					"OpenIdConnectVersion1.0Service",
+					ServiceEndpoint::Uri("https://openid.example.com/")
+				)])
+				.build(),
+			DidDocument {
+				context: GENERIC_DID_CTX,
+				id: "did:example:123456789abcdefghi",
+				service: vec![Service {
+					id: "did:example:123456789abcdefghi#openid",
+					svc_type: "OpenIdConnectVersion1.0Service",
+					endpoint: ServiceEndpoint::Uri("https://openid.example.com/")
+				}],
 				..Default::default()
 			}
 		)

@@ -2,7 +2,7 @@ use crate::{
 	did::Did,
 	did_doc::{
 		DidDocument, DidDocumentBuilder, PublicKey, PublicKeyBuilder, PublicKeyEncoded,
-		PublicKeyType, VerificationMethod, KEY_FORMATS,
+		PublicKeyType, Service, ServiceEndpoint, VerificationMethod, KEY_FORMATS,
 	},
 };
 use json::JsonValue;
@@ -16,6 +16,8 @@ const CREATED_PROP: &str = "created";
 const UPDATED_PROP: &str = "updated";
 const PUBKEYS_PROP: &str = "publicKey";
 const AUTHN_PROP: &str = "authentication";
+const SERVICE_PROP: &str = "service";
+const SVCENDP_PROP: &str = "serviceEndpoint";
 
 const KEYID_PROP: &str = "id";
 const KEYTYPE_PROP: &str = "type";
@@ -199,6 +201,51 @@ fn parse_auth_verif_method<'a>(
 	}
 }
 
+fn parse_did_services<'a>(json: &'a JsonValue) -> Result<Vec<Service<'a>>, &'a str> {
+	let mut services: Vec<Service> = vec![];
+	for i in 0..json[SERVICE_PROP].len() {
+		let svc = &json[SERVICE_PROP][i];
+		if svc.is_null() {
+			break;
+		}
+
+		let service = parse_did_svc_endpoint(svc)?;
+		services.push(service);
+	}
+	Ok(services)
+}
+
+fn parse_did_svc_endpoint(json: &JsonValue) -> Result<Service<'_>, &str> {
+	let svc_id = match json[KEYID_PROP].as_str() {
+		Some(id) => {
+			if Did::is_valid(&id) {
+				Ok(id)
+			} else {
+				Err("invalid service endpoint id")
+			}
+		}
+		None => Err("missing service endpoint id"),
+	}?;
+
+	let svc_type = match json[KEYTYPE_PROP].as_str() {
+		Some(svc_type) => Ok(svc_type),
+		None => Err("missing service endpoint type"),
+	}?;
+
+	let svc_endpoint = if json[SVCENDP_PROP].is_string() {
+		match json[SVCENDP_PROP].as_str() {
+			Some(uri) => Ok(ServiceEndpoint::Uri(uri)),
+			None => Err("invalid service endpoint URI"),
+		}
+	} else if json.is_object() {
+		Err("invalid service endpoint JSON-LD object : unimplemented")
+	} else {
+		Err("invalid service endpoint : unknown format")
+	}?;
+
+	Ok(Service::new(svc_id, svc_type, svc_endpoint))
+}
+
 pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let _ctx = parse_did_context(json)?; //TODO: handle additional contexts beyond generic DID context
 	let sub = parse_did_subject(json)?;
@@ -206,10 +253,12 @@ pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let updated = parse_did_updated(json)?;
 	let keys = parse_did_pubkey_list(json)?;
 	let auth = parse_did_auth_list(json, &keys[..])?;
+	let services = parse_did_services(json)?;
 
 	let mut did_doc = DidDocumentBuilder::new(sub)
 		.with_authentication(auth)
-		.with_pubkeys(keys);
+		.with_pubkeys(keys)
+		.with_services(services);
 	if let Some(created) = created {
 		did_doc = did_doc.created_on(created);
 	}
