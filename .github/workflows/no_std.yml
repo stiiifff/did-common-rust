@@ -9,5 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install WASM target
+      run: rustup target add wasm32-unknown-unknown
     - name: Build
       run: cargo build --verbose --no-default-features --features=alloc --target=wasm32-unknown-unknown
