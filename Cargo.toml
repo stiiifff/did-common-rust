@@ -16,13 +16,21 @@ the [DID specification](https://w3c-ccg.github.io/did-spec/) by the W3C.
 categories = ["parser-implementations"]
 keywords = ["decentralized-id","did"]
 
+[features]
+alloc = []
+std = ["alloc"]
+default = ["std"]
+
 [dependencies]
-json = "^0.11"
+json = "0.12"
 lazy_static = "^1"
-regex = "^1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 nom = { version="^5", default-features = true }
+regex = "^1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-nom = { version="^5", default-features = true }
+nom = { version="^5", default-features = false }
+
+[badges]
+maintenance = { status = "actively-developed" }

@@ -1,5 +1,8 @@
-use std::convert::From;
-use std::fmt;
+use crate::lib::std::fmt;
+#[cfg(feature = "alloc")]
+use crate::lib::std::string::{String, ToString};
+#[cfg(feature = "alloc")]
+use crate::lib::std::vec::Vec;
 
 use crate::did_parser;
 

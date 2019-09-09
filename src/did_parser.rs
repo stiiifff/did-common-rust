@@ -1,4 +1,8 @@
 use crate::did::{Did, DidBuilder, ParamOptionTuple};
+#[cfg(feature = "alloc")]
+use crate::lib::std::string::String;
+#[cfg(feature = "alloc")]
+use crate::lib::std::vec::Vec;
 
 use nom::{
 	bytes::complete::tag,

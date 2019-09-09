@@ -1,0 +1,13 @@
+name: no_std
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: cargo build --verbose --no_default-features --features=alloc --target=wasm32-unknown-unknown --release 
