@@ -19,9 +19,9 @@ const AUTHN_PROP: &str = "authentication";
 const SERVICE_PROP: &str = "service";
 const SVCENDP_PROP: &str = "serviceEndpoint";
 
-const KEYID_PROP: &str = "id";
-const KEYTYPE_PROP: &str = "type";
-const KEYCTRL_PROP: &str = "controller";
+const ID_PROP: &str = "id";
+const TYPE_PROP: &str = "type";
+const CTRL_PROP: &str = "controller";
 
 lazy_static! {
 	static ref DATETIME_REGEX: Regex = Regex::new(
@@ -37,25 +37,37 @@ lazy_static! {
 	.unwrap();
 }
 
+fn parse_str<'a>(json: &'a JsonValue, prop: &str, err: &'a str) -> Result<&'a str, &'a str> {
+	json[prop].as_str().ok_or(err)
+}
+
+fn parse_str_then<'a, F: FnOnce(&'a str) -> Result<&'a str, &'a str>>(
+	json: &'a JsonValue,
+	prop: &str,
+	err: &'a str,
+	op: F,
+) -> Result<&'a str, &'a str> {
+	parse_str(json, prop, err).and_then(op)
+}
+
 fn parse_did_context(json: &JsonValue) -> Result<&str, &str> {
-	match json[CONTEXT_PROP].as_str() {
-		Some(GENERIC_DID_CTX) => Ok(GENERIC_DID_CTX),
-		Some(_) => Err("invalid DID context"),
-		None => Err("missing DID context"),
-	}
+	parse_str_then(json, CONTEXT_PROP, "missing DID context", |ctx| {
+		if ctx == GENERIC_DID_CTX {
+			Ok(GENERIC_DID_CTX)
+		} else {
+			Err("invalid DID context")
+		}
+	})
 }
 
 fn parse_did_subject(json: &JsonValue) -> Result<&str, &str> {
-	match json[SUBJECT_PROP].as_str() {
-		Some(sub) => {
-			if Did::is_valid(sub) {
-				Ok(sub)
-			} else {
-				Err("invalid DID subject")
-			}
+	parse_str_then(json, SUBJECT_PROP, "missing DID subject", |sub| {
+		if Did::is_valid(sub) {
+			Ok(sub)
+		} else {
+			Err("invalid DID subject")
 		}
-		None => Err("missing DID subject"),
-	}
+	})
 }
 
 fn parse_did_created(json: &JsonValue) -> Result<Option<&str>, &str> {
@@ -107,33 +119,26 @@ fn parse_did_pubkey<'a>(key: &'a JsonValue, keys: &[PublicKey]) -> Result<Public
 }
 
 fn parse_did_pubkey_id(key: &JsonValue) -> Result<&str, &str> {
-	match key[KEYID_PROP].as_str() {
-		Some(id) => {
-			if Did::is_valid(&id) {
-				Ok(id)
-			} else {
-				Err("invalid DID public key id")
-			}
+	parse_str_then(key, ID_PROP, "missing DID public key id", |id| {
+		if Did::is_valid(&id) {
+			Ok(id)
+		} else {
+			Err("invalid DID public key id")
 		}
-		None => Err("missing DID public key id"),
-	}
+	})
 }
 
 fn parse_did_pubkey_type(key: &JsonValue) -> Result<PublicKeyType, &str> {
-	match key[KEYTYPE_PROP].as_str() {
-		Some(r#type) => match PublicKeyType::from_str(&r#type) {
+	parse_str(key, TYPE_PROP, "missing DID public key type").and_then(|r#type| {
+		match PublicKeyType::from_str(&r#type) {
 			Ok(key_type) => Ok(key_type),
 			Err(_) => Err("invalid DID public key type"),
-		},
-		None => Err("missing DID public key type"),
-	}
+		}
+	})
 }
 
 fn parse_did_pubkey_ctrl(key: &JsonValue) -> Result<&str, &str> {
-	match key[KEYCTRL_PROP].as_str() {
-		Some(ctrl) => Ok(ctrl),
-		None => Err("missing DID public key controller"),
-	}
+	parse_str(key, CTRL_PROP, "missing DID public key controller")
 }
 
 fn parse_did_pubkey_format(key: &JsonValue) -> Result<&str, &str> {
@@ -147,30 +152,22 @@ fn parse_did_pubkey_encoded<'a>(
 	key: &'a JsonValue,
 	key_format: &'a str,
 ) -> Result<PublicKeyEncoded<'a>, &'a str> {
-	match key[key_format].as_str() {
-		Some(key_enc) => match PublicKeyEncoded::from((key_format, key_enc)) {
+	parse_str(key, key_format, "missing DID public key controller").and_then(|key_enc| {
+		match PublicKeyEncoded::from((key_format, key_enc)) {
 			PublicKeyEncoded::Unsupported => Err("unknown DID public key format"),
 			supported => Ok(supported),
-		},
-		None => Err("missing DID public key controller"),
-	}
+		}
+	})
 }
 
 fn parse_did_auth_list<'a>(
 	json: &'a JsonValue,
 	pub_keys: &[PublicKey],
 ) -> Result<Vec<VerificationMethod<'a>>, &'a str> {
-	let mut verif_methods: Vec<VerificationMethod> = vec![];
-	for i in 0..json[AUTHN_PROP].len() {
-		let vm = &json[AUTHN_PROP][i];
-		if vm.is_null() {
-			break;
-		}
-
-		let verif_method = parse_auth_verif_method(vm, pub_keys)?;
-		verif_methods.push(verif_method);
-	}
-	Ok(verif_methods)
+	json[AUTHN_PROP]
+		.members()
+		.map(|vm| parse_auth_verif_method(vm, pub_keys))
+		.collect()
 }
 
 fn parse_auth_verif_method<'a>(
@@ -178,20 +175,13 @@ fn parse_auth_verif_method<'a>(
 	pub_keys: &[PublicKey],
 ) -> Result<VerificationMethod<'a>, &'a str> {
 	if json.is_string() {
-		let did = match json.as_str() {
-			Some(did) if Did::is_valid(did) => Ok(did),
-			Some(_) => Err("invalid reference verification method"),
-			None => Err("invalid reference verification method"),
-		}?;
-
+		let did = parse_auth_verif_method_ref(json)?;
 		if !pub_keys.iter().any(|k| k.id() == did) {
 			return Err("unknown reference verification method");
 		}
-
 		Ok(VerificationMethod::Reference(did))
 	} else if json.is_object() {
 		let key = parse_did_pubkey(json, Vec::<PublicKey>::new().as_slice())?;
-
 		if pub_keys.iter().any(|k| k.id() == key.id()) {
 			return Err("duplicate public key id from embedded verification method");
 		}
@@ -201,49 +191,55 @@ fn parse_auth_verif_method<'a>(
 	}
 }
 
-fn parse_did_services<'a>(json: &'a JsonValue) -> Result<Vec<Service<'a>>, &'a str> {
-	let mut services: Vec<Service> = vec![];
-	for i in 0..json[SERVICE_PROP].len() {
-		let svc = &json[SERVICE_PROP][i];
-		if svc.is_null() {
-			break;
-		}
+fn parse_auth_verif_method_ref(json: &JsonValue) -> Result<&str, &str> {
+	json.as_str()
+		.ok_or("invalid reference verification method")
+		.and_then(|did| {
+			if Did::is_valid(did) {
+				Ok(did)
+			} else {
+				Err("invalid reference verification method")
+			}
+		})
+}
 
-		let service = parse_did_svc_endpoint(svc)?;
-		services.push(service);
-	}
-	Ok(services)
+fn parse_did_service_list<'a>(json: &'a JsonValue) -> Result<Vec<Service<'a>>, &'a str> {
+	json[SERVICE_PROP]
+		.members()
+		.map(parse_did_svc_endpoint)
+		.collect()
 }
 
 fn parse_did_svc_endpoint(json: &JsonValue) -> Result<Service<'_>, &str> {
-	let svc_id = match json[KEYID_PROP].as_str() {
-		Some(id) => {
-			if Did::is_valid(&id) {
-				Ok(id)
-			} else {
-				Err("invalid service endpoint id")
-			}
-		}
-		None => Err("missing service endpoint id"),
-	}?;
+	let svc_id = parse_did_svc_endpoint_id(json)?;
+	let svc_type = parse_did_svc_endpoint_type(json)?;
+	let svc_endpoint = parse_did_svc_endpoint_value(json)?;
+	Ok(Service::new(svc_id, svc_type, svc_endpoint))
+}
 
-	let svc_type = match json[KEYTYPE_PROP].as_str() {
-		Some(svc_type) => Ok(svc_type),
-		None => Err("missing service endpoint type"),
-	}?;
-
-	let svc_endpoint = if json[SVCENDP_PROP].is_string() {
-		match json[SVCENDP_PROP].as_str() {
-			Some(uri) => Ok(ServiceEndpoint::Uri(uri)),
-			None => Err("invalid service endpoint URI"),
+fn parse_did_svc_endpoint_id(key: &JsonValue) -> Result<&str, &str> {
+	parse_str_then(key, ID_PROP, "missing service endpoint id", |id| {
+		if Did::is_valid(&id) {
+			Ok(id)
+		} else {
+			Err("invalid service endpoint id")
 		}
+	})
+}
+
+fn parse_did_svc_endpoint_type(json: &JsonValue) -> Result<&str, &str> {
+	parse_str(json, TYPE_PROP, "missing service endpoint type")
+}
+
+fn parse_did_svc_endpoint_value(json: &JsonValue) -> Result<ServiceEndpoint, &str> {
+	if json[SVCENDP_PROP].is_string() {
+		parse_str(json, SVCENDP_PROP, "invalid service endpoint URI")
+			.and_then(|uri| Ok(ServiceEndpoint::Uri(uri)))
 	} else if json.is_object() {
 		Err("invalid service endpoint JSON-LD object : unimplemented")
 	} else {
 		Err("invalid service endpoint : unknown format")
-	}?;
-
-	Ok(Service::new(svc_id, svc_type, svc_endpoint))
+	}
 }
 
 pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
@@ -253,7 +249,7 @@ pub fn parse_did_doc(json: &JsonValue) -> Result<DidDocument<'_>, &str> {
 	let updated = parse_did_updated(json)?;
 	let keys = parse_did_pubkey_list(json)?;
 	let auth = parse_did_auth_list(json, &keys[..])?;
-	let services = parse_did_services(json)?;
+	let services = parse_did_service_list(json)?; //TODO: validate URI, handle embedded service object + extra props
 
 	let mut did_doc = DidDocumentBuilder::new(sub)
 		.with_authentication(auth)

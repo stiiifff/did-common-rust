@@ -509,6 +509,21 @@ mod tests {
 	}
 
 	#[test]
+	fn service_property_accessors() {
+		let svc = Service::new(
+			"did:example:123456789abcdefghi#openid",
+			"OpenIdConnectVersion1.0Service",
+			ServiceEndpoint::Uri("https://openid.example.com/"),
+		);
+		assert_eq!(svc.id(), "did:example:123456789abcdefghi#openid");
+		assert_eq!(svc.svc_type(), "OpenIdConnectVersion1.0Service");
+		assert_eq!(
+			svc.endpoint(),
+			&ServiceEndpoint::Uri("https://openid.example.com/")
+		);
+	}
+
+	#[test]
 	fn did_document_property_accessors() {
 		let pubkey = PublicKey {
 			id: "did:example:123456789abcdefghi#keys-1",

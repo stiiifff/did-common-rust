@@ -1,6 +1,6 @@
 use did_common::did_doc::{
-	DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType,
-	VerificationMethod,
+	DidDocument, DidDocumentBuilder, PublicKeyBuilder, PublicKeyEncoded, PublicKeyType, Service,
+	ServiceEndpoint, VerificationMethod,
 };
 
 fn json_parse(input: &str) -> json::JsonValue {
@@ -333,5 +333,87 @@ fn parse_did_doc_with_duplicate_id_from_auth_embedded() {
         "#
 		)),
 		Err("duplicate public key id from embedded verification method")
+	);
+}
+
+#[test]
+fn parse_did_doc_with_service_uri_endpoints() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+			"service": [{
+				"id": "did:example:123456789abcdefghi#openid",
+				"type": "OpenIdConnectVersion1.0Service",
+				"serviceEndpoint": "https://openid.example.com/"
+			}, {
+				"id": "did:example:123456789abcdefghi#vcr",
+				"type": "CredentialRepositoryService",
+				"serviceEndpoint": "https://repository.example.com/service/8377464"
+			}, {
+				"id": "did:example:123456789abcdefghi#xdi",
+				"type": "XdiService",
+				"serviceEndpoint": "https://xdi.example.com/8377464"
+			}, {
+				"id": "did:example:123456789abcdefghi#agent",
+				"type": "AgentService",
+				"serviceEndpoint": "https://agent.example.com/8377464"
+			}]
+        }
+        "#
+		)),
+		Ok(DidDocumentBuilder::new("did:example:123456789abcdefghi")
+			.with_services(vec![
+				Service::new(
+					"did:example:123456789abcdefghi#openid",
+					"OpenIdConnectVersion1.0Service",
+					ServiceEndpoint::Uri("https://openid.example.com/")
+				),
+				Service::new(
+					"did:example:123456789abcdefghi#vcr",
+					"CredentialRepositoryService",
+					ServiceEndpoint::Uri("https://repository.example.com/service/8377464")
+				),
+				Service::new(
+					"did:example:123456789abcdefghi#xdi",
+					"XdiService",
+					ServiceEndpoint::Uri("https://xdi.example.com/8377464")
+				),
+				Service::new(
+					"did:example:123456789abcdefghi#agent",
+					"AgentService",
+					ServiceEndpoint::Uri("https://agent.example.com/8377464")
+				),
+			])
+			.build())
+	);
+}
+
+#[test]
+fn parse_did_doc_with_service_object_endpoint() {
+	assert_eq!(
+		DidDocument::parse(&json_parse(
+			r#"
+        {
+            "@context": "https://www.w3.org/2019/did/v1",
+            "id": "did:example:123456789abcdefghi",
+			"service": [
+				{
+					"id": "did:example:123456789abcdefghi#hub",
+					"type": "IdentityHub",
+					"publicKey": "did:example:123456789abcdefghi#key-1",
+					"serviceEndpoint": {
+						"@context": "https://schema.identity.foundation/hub",
+						"type": "UserHubEndpoint",
+						"instances": ["did:example:456", "did:example:789"]
+					}
+				}
+			]
+        }
+        "#
+		)),
+		Err("invalid service endpoint JSON-LD object : unimplemented")
 	);
 }
