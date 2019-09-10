@@ -1,3 +1,6 @@
+use crate::lib::std::string::String;
+use crate::lib::std::vec::Vec;
+
 use crate::did::{Did, DidBuilder, ParamOptionTuple};
 
 use nom::{

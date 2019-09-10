@@ -1,3 +1,6 @@
+use crate::lib::std::str::FromStr;
+use crate::lib::std::vec::Vec;
+
 use crate::{
 	did::Did,
 	did_doc::{
@@ -5,9 +8,10 @@ use crate::{
 		PublicKeyType, Service, ServiceEndpoint, VerificationMethod, KEY_FORMATS,
 	},
 };
+
 use json::JsonValue;
+#[cfg(feature = "std")]
 use regex::Regex;
-use std::str::FromStr;
 
 pub const GENERIC_DID_CTX: &str = "https://www.w3.org/2019/did/v1";
 const CONTEXT_PROP: &str = "@context";
@@ -23,6 +27,7 @@ const ID_PROP: &str = "id";
 const TYPE_PROP: &str = "type";
 const CTRL_PROP: &str = "controller";
 
+#[cfg(feature = "std")]
 lazy_static! {
 	static ref DATETIME_REGEX: Regex = Regex::new(
 		// See https://www.w3.org/TR/xmlschema11-2/#dateTime
@@ -37,10 +42,12 @@ lazy_static! {
 	.unwrap();
 }
 
+#[inline]
 fn parse_str<'a>(json: &'a JsonValue, prop: &str, err: &'a str) -> Result<&'a str, &'a str> {
 	json[prop].as_str().ok_or(err)
 }
 
+#[inline]
 fn parse_str_then<'a, F: FnOnce(&'a str) -> Result<&'a str, &'a str>>(
 	json: &'a JsonValue,
 	prop: &str,
@@ -70,9 +77,19 @@ fn parse_did_subject(json: &JsonValue) -> Result<&str, &str> {
 	})
 }
 
+#[cfg(feature = "std")]
+fn validate_datetime(input: &str) -> bool {
+	DATETIME_REGEX.is_match(input)
+}
+
+#[cfg(not(feature = "std"))]
+fn validate_datetime(_input: &str) -> bool {
+	true
+}
+
 fn parse_did_created(json: &JsonValue) -> Result<Option<&str>, &str> {
 	match json[CREATED_PROP].as_str() {
-		Some(created) if DATETIME_REGEX.is_match(created) => Ok(Some(created)),
+		Some(created) if validate_datetime(created) => Ok(Some(created)),
 		Some(_) => Err("invalid created timestamp"),
 		None => Ok(None),
 	}
@@ -80,7 +97,8 @@ fn parse_did_created(json: &JsonValue) -> Result<Option<&str>, &str> {
 
 fn parse_did_updated(json: &JsonValue) -> Result<Option<&str>, &str> {
 	match json[UPDATED_PROP].as_str() {
-		Some(created) if DATETIME_REGEX.is_match(created) => Ok(Some(created)),
+		#[cfg(feature = "std")]
+		Some(created) if validate_datetime(created) => Ok(Some(created)),
 		Some(_) => Err("invalid updated timestamp"),
 		None => Ok(None),
 	}

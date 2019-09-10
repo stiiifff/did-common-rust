@@ -1,7 +1,9 @@
 did-common
 ==========
 
-[![Actions Status](https://github.com/stiiifff/did-common-rust/workflows/Rust/badge.svg)](https://github.com/stiiifff/did-common-rust/actions)
+[![crates.io](https://img.shields.io/crates/v/did_common.svg)](https://crates.io/crates/did_common)
+[![std build](https://github.com/stiiifff/did-common-rust/workflows/std/badge.svg)](https://github.com/stiiifff/did-common-rust/actions)
+[![no_std build](https://github.com/stiiifff/did-common-rust/workflows/no_std/badge.svg)](https://github.com/stiiifff/did-common-rust/actions)
 
 A rust library for parsing Decentralized Identifiers (DIDs) following
 the [DID specification](https://w3c-ccg.github.io/did-spec/) by the W3C.
@@ -12,7 +14,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-did-common = "^0.1"
+did-common = "^0.3"
 ```
 
 and this to your crate root (if you're using Rust 2015):

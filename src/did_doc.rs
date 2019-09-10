@@ -1,8 +1,9 @@
-use std::error::Error;
-use std::fmt;
-use std::str::FromStr;
+use crate::lib::std::fmt;
+use crate::lib::std::str::FromStr;
+use crate::lib::std::vec::Vec;
 
 use crate::diddoc_parser;
+
 use json::JsonValue;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -30,13 +31,7 @@ pub struct ParsePublicKeyTypeError(());
 
 impl fmt::Display for ParsePublicKeyTypeError {
 	fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-		fmt.write_str(self.description())
-	}
-}
-
-impl Error for ParsePublicKeyTypeError {
-	fn description(&self) -> &str {
-		"invalid DID public key type"
+		fmt.write_str("invalid DID public key type")
 	}
 }
 
@@ -260,10 +255,7 @@ impl<'a> DidDocumentBuilder<'a> {
 		self
 	}
 
-	pub fn with_authentication(
-		mut self,
-		authentication: std::vec::Vec<VerificationMethod<'a>>,
-	) -> Self {
+	pub fn with_authentication(mut self, authentication: Vec<VerificationMethod<'a>>) -> Self {
 		self.authentication = authentication;
 		self
 	}
@@ -294,11 +286,11 @@ impl<'a> DidDocumentBuilder<'a> {
 #[cfg(test)]
 mod tests {
 	use super::diddoc_parser::GENERIC_DID_CTX;
+	use super::FromStr;
 	use super::{
 		DidDocument, DidDocumentBuilder, ParsePublicKeyTypeError, PublicKey, PublicKeyBuilder,
 		PublicKeyEncoded, PublicKeyType, Service, ServiceEndpoint, VerificationMethod,
 	};
-	use std::str::FromStr;
 
 	const TEST_ENCODED_KEY: &str = "0x1234567890";
 
