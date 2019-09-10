@@ -60,8 +60,16 @@ impl fmt::Display for Did<'_> {
 					params
 						.iter()
 						.map(ToString::to_string)
-						.collect::<Vec<_>>()
-						.join(";")
+						//TODO: Use join when stable
+						// .collect::<Vec<_>>()
+						// .join(";")
+						.fold(&mut String::new(), |acc, p| {
+							if !acc.is_empty() {
+								acc.push_str(";");
+							}
+							acc.push_str(&p);
+							acc
+						})
 				),
 				None => String::new(),
 			},
