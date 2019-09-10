@@ -14,7 +14,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-did-common = "^0.3"
+did_common = "^0.3"
 ```
 
 and this to your crate root (if you're using Rust 2015):
@@ -29,7 +29,7 @@ use did_common::did::Did;
 
 let did = Did::parse("did:example:123456789abcdefghi#keys-1").unwrap();
 
-if Did::is_valid("did:example:") {
+if Did::is_valid("did:ethr:0xf3beac30c498d9e26865f34fcaa57dbb935b0d74") {
   println!("DID is valid.");
 }
 // output: DID is valid.
@@ -50,7 +50,7 @@ println!("{}", did);
 
 ### Usage: DID Document
 
-Here is how to parse a simple DID Document:
+Here is how to parse a DID Document:
 ```rust
 use did_common::did_doc::DidDocument;
 use did_common::json_parse;
@@ -61,19 +61,35 @@ let did_doc = DidDocument::parse(
     {
       "@context": "https://www.w3.org/2019/did/v1",
       "id": "did:example:123456789abcdefghi",
+      "created": "2002-10-10T17:00:00Z"
+      "updated": "2002-10-10T17:00:00Z"
       "publicKey": [
         {
-            "id": "did:example:123456789abcdefghi#keys-1",
-            "type": "Secp256k1VerificationKey2018",
-            "controller": "did:example:123456789abcdefghi",
-            "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+          "id": "did:example:123456789abcdefghi#keys-1",
+          "type": "Secp256k1VerificationKey2018",
+          "controller": "did:example:123456789abcdefghi",
+          "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+        }
+      ],
+      "authentication": [
+        {
+          "id": "did:example:123456789abcdefghi#keys-2",
+          "type": "Ed25519VerificationKey2018",
+          "controller": "did:example:123456789abcdefghi",
+          "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }
       ]
+      "service": [
+        {
+          "id": "did:example:123456789abcdefghi#openid",
+          "type": "OpenIdConnectVersion1.0Service",
+          "serviceEndpoint": "https://openid.example.com/"
+        }
     }
   "#).unwrap()
 );
 println!("{}", did_doc.id());
-// output: did:example:21tDAKCERh95uGgKbJNHYp
+// output: did:example:123456789abcdefghi
 ```
 
 You can also build a DID Document using a builder:
@@ -84,12 +100,12 @@ let did_doc =
   DidDocumentBuilder::new("did:example:123456789abcdefghi")
     .with_pubkeys(vec![
         PublicKeyBuilder::new(
-            "did:example:123456789abcdefghi#keys-1",
-            PublicKeyType::EcdsaSecp256k1,
-            "did:example:123456789abcdefghi"
+          "did:example:123456789abcdefghi#keys-1",
+          PublicKeyType::EcdsaSecp256k1,
+          "did:example:123456789abcdefghi"
         )
         .with_encoded_key(PublicKeyEncoded::Hex(
-            "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+          "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
         ))
         .build()
     ])

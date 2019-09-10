@@ -1,6 +1,6 @@
 [package]
 name = "did_common"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
@@ -9,8 +9,7 @@ homepage = "https://github.com/stiiifff/did-common-rust"
 repository = "https://github.com/stiiifff/did-common-rust"
 documentation = "https://github.com/stiiifff/did-common-rust/blob/master/README.md"
 description = """
-A rust library for parsing Decentralized Identifiers (DIDs) following
-the [DID specification](https://w3c-ccg.github.io/did-spec/) by the W3C.
+A rust library for parsing Decentralized Identifiers (DIDs), with no_std support.
 """
 
 categories = ["parser-implementations"]
