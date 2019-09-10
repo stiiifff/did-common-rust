@@ -1,8 +1,7 @@
-use crate::did::{Did, DidBuilder, ParamOptionTuple};
-#[cfg(feature = "alloc")]
 use crate::lib::std::string::String;
-#[cfg(feature = "alloc")]
 use crate::lib::std::vec::Vec;
+
+use crate::did::{Did, DidBuilder, ParamOptionTuple};
 
 use nom::{
 	bytes::complete::tag,

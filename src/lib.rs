@@ -10,7 +10,7 @@ extern crate lazy_static;
 #[cfg(feature = "std")]
 extern crate regex;
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(all(not(feature = "std")))]
 #[macro_use]
 extern crate alloc;
 
@@ -18,41 +18,36 @@ extern crate alloc;
 /// crates. This avoids elaborate import wrangling having to happen in every
 /// module.
 pub mod lib {
-    mod core {
-        #[cfg(not(feature = "std"))]
-        pub use core::*;
-        #[cfg(feature = "std")]
-        pub use std::*;
-    }
+	mod core {
+		#[cfg(not(feature = "std"))]
+		pub use core::*;
+		#[cfg(feature = "std")]
+		pub use std::*;
+	}
 
-    #[cfg(not(feature = "std"))]
-    /// internal std exports for no_std compatibility
-    pub mod std {
-        #[cfg(feature = "alloc")]
-        #[cfg_attr(feature = "alloc", macro_use)]
-        pub use alloc::{boxed, string, vec};
+	#[cfg(not(feature = "std"))]
+	/// internal std exports for no_std compatibility
+	pub mod std {
+		pub use alloc::{boxed, string, vec};
+		pub use core::{borrow, cmp, convert, fmt, iter, mem, ops, option, result, slice, str};
+		/// internal reproduction of std prelude
+		pub mod prelude {
+			pub use core::prelude as v1;
+		}
+	}
 
-        pub use core::{borrow, cmp, convert, fmt, iter, mem, ops, option, result, slice, str};
-
-        /// internal reproduction of std prelude
-        pub mod prelude {
-            pub use core::prelude as v1;
-        }
-    }
-
-    #[cfg(feature = "std")]
-    /// internal std exports for no_std compatibility
-    pub mod std {
-        pub use std::{
-            alloc, borrow, boxed, cmp, collections, convert, fmt, hash, iter, mem, ops, option,
-            result, slice, str, string, vec,
-        };
-
-        /// internal reproduction of std prelude
-        pub mod prelude {
-            pub use std::prelude as v1;
-        }
-    }
+	#[cfg(feature = "std")]
+	/// internal std exports for no_std compatibility
+	pub mod std {
+		pub use std::{
+			alloc, borrow, boxed, cmp, collections, convert, fmt, hash, iter, mem, ops, option,
+			result, slice, str, string, vec,
+		};
+		/// internal reproduction of std prelude
+		pub mod prelude {
+			pub use std::prelude as v1;
+		}
+	}
 }
 
 mod did_parser;

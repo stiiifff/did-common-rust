@@ -17,9 +17,8 @@ categories = ["parser-implementations"]
 keywords = ["decentralized-id","did"]
 
 [features]
-alloc = []
-std = ["alloc"]
 default = ["std"]
+std = []
 
 [dependencies]
 json = "0.12"

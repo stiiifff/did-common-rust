@@ -1,8 +1,9 @@
-use crate::diddoc_parser;
 use crate::lib::std::fmt;
 use crate::lib::std::str::FromStr;
-#[cfg(feature = "alloc")]
 use crate::lib::std::vec::Vec;
+
+use crate::diddoc_parser;
+
 use json::JsonValue;
 
 #[derive(Clone, Debug, PartialEq)]

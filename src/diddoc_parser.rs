@@ -1,6 +1,6 @@
 use crate::lib::std::str::FromStr;
-#[cfg(feature = "alloc")]
 use crate::lib::std::vec::Vec;
+
 use crate::{
 	did::Did,
 	did_doc::{
@@ -8,6 +8,7 @@ use crate::{
 		PublicKeyType, Service, ServiceEndpoint, VerificationMethod, KEY_FORMATS,
 	},
 };
+
 use json::JsonValue;
 #[cfg(feature = "std")]
 use regex::Regex;
