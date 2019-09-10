@@ -285,14 +285,11 @@ impl<'a> DidDocumentBuilder<'a> {
 #[cfg(test)]
 mod tests {
 	use super::diddoc_parser::GENERIC_DID_CTX;
-	#[cfg(all(not(feature = "std"), feature = "alloc"))]
-	use super::lib::std::str::FromStr;
+	use super::FromStr;
 	use super::{
 		DidDocument, DidDocumentBuilder, ParsePublicKeyTypeError, PublicKey, PublicKeyBuilder,
 		PublicKeyEncoded, PublicKeyType, Service, ServiceEndpoint, VerificationMethod,
 	};
-	#[cfg(feature = "std")]
-	use std::str::FromStr;
 
 	const TEST_ENCODED_KEY: &str = "0x1234567890";
 
